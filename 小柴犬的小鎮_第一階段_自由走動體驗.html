@@ -159,6 +159,66 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
  .door-label{padding:5px 7px;font-size:14px}
 }
 
+/* Viewport layout: keep the scene and its controls side by side on laptops. */
+*{box-sizing:border-box}
+body{margin:0;padding:10px max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px))}
+.app{max-width:1440px;gap:8px}
+header{flex-wrap:nowrap;min-height:38px}
+.brand-mark{width:34px;height:34px;border-radius:10px;font-size:20px;flex:none}
+h1{font-size:20px;letter-spacing:.02em}.tagline,.location-label{display:none}
+.hud{font-size:14px}.hud span{padding:5px 9px;box-shadow:none}
+.travel-tools{padding:0;min-height:44px}#sceneName{font-size:18px}
+.travel-map{gap:6px;padding:8px}.map-hint{display:none}
+.map-place{min-height:48px;flex-direction:row;justify-content:center;padding:6px;gap:6px}
+.map-place small{display:none}.map-icon{font-size:20px}
+.tabs{padding:3px;gap:4px}.tab{padding:6px 4px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;min-height:0}
+.play-area{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.stage{width:100%;flex:none;border-width:3px;border-radius:14px}
+.stage-screen{box-sizing:content-box}
+.stage-caption{padding:6px 8px;font-size:15px;line-height:1.4}
+.travel-status{width:100%;text-align:center;line-height:1.4;min-height:2.8em}
+.controls{min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
+.panel{min-height:0;padding:10px;gap:8px;box-shadow:none}
+.panel>*{flex-shrink:0}.panel .inv{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 4px 4px 0}
+.msg{margin:0;padding:8px;min-height:0;font-size:15px;line-height:1.5}
+.btn{padding:8px 5px}.chip{padding:5px 3px}.row>.btn{flex:1}
+.inv-item{padding-top:6px;gap:6px}.inv-item .btn{padding:6px 9px}
+.qbox{font-size:17px;padding:8px}.stats{gap:6px 10px}
+.instructions{font-size:14px;color:var(--muted)}
+summary{cursor:pointer;min-height:32px;padding:6px 2px;font-size:14px;line-height:20px}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.instructions .hint{margin:4px 0 0;padding:8px;max-height:110px;overflow:auto}
+.daily-card{display:block;flex:none;padding:4px 10px;border-radius:12px}
+.daily-content{display:flex;flex-direction:column;gap:8px;padding:4px 0 6px}
+.daily-head{display:none}.daily-goals{grid-template-columns:1fr;gap:4px}.goal-line{padding:5px}
+@media(min-width:900px) and (min-height:600px){
+ .app{height:calc(100vh - 20px);height:calc(100dvh - 20px)}
+ .app>header,.app>.travel-tools,.app>.travel-map,.app>.tabs{flex-shrink:0}
+ .workspace{flex:1;overflow:visible}
+ .controls>.panel{flex:1}
+ /* The fixed caption and status budget leaves the complete 320:236 canvas visible. */
+ .stage{max-width:calc((100vh - 248px) * 320 / 236);max-width:calc((100dvh - 248px) * 320 / 236)}
+ .travel-map:not([hidden]) ~ .workspace .stage{max-width:calc((100vh - 326px) * 320 / 236);max-width:calc((100dvh - 326px) * 320 / 236)}
+ .controls{overflow:auto;overscroll-behavior:contain;padding:2px 4px 4px 0}
+}
+@media(min-width:900px) and (max-height:740px){
+ .workspace{grid-template-columns:minmax(0,1fr) 380px;gap:10px}
+ .panel{gap:6px;padding:8px}.msg{font-size:14px;padding:6px}
+ .chip small{font-size:14px}.grill{padding:5px 2px}
+ .daily-card{padding:2px 8px}
+}
+@media(max-width:899px),(max-height:599px){
+ .workspace{grid-template-columns:minmax(0,1fr)}
+ .play-area{max-width:640px;width:100%;margin:auto}
+ .controls{display:block}.panel,.daily-card{margin-bottom:8px}
+ .panel .inv{max-height:none;overflow:visible}
+ header{flex-wrap:wrap}.hud{gap:4px}
+ .travel-map{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .map-place{flex-direction:column;font-size:14px}.map-place:last-child{grid-column:auto}
+ .map-icon{font-size:18px}.travel-status{min-height:0}
+}
+
 </style>
 </head>
 <body>
@@ -179,19 +239,6 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <button type="button" class="map-place" data-travel="temple"><span class="map-icon" aria-hidden="true">🏮</span><strong>廟口</strong><small>香腸攤開張</small></button>
     <button type="button" class="map-place" data-travel="shop"><span class="map-icon" aria-hidden="true">🛍️</span><strong>商店街</strong><small>慢慢逛小店</small></button>
   </nav>
-  <div class="stage">
-    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
-    <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
-  </div>
-  <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
-  <section class="daily-card" aria-label="今日小目標">
-    <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
-    <div class="daily-goals">
-      <div class="goal-line"><span class="goal-dot">1</span><span>到信義國小完成一堂課</span><b id="goalClass">待完成</b></div>
-      <div class="goal-line"><span class="goal-dot">2</span><span>今天在廟口賣出 3 條香腸</span><b id="goalSell">0 / 3</b></div>
-    </div>
-    <button class="btn daily-claim" id="bDaily" disabled>完成兩項目標後領取獎勵</button>
-  </section>
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-s="home" aria-selected="true">柴犬的家</button>
     <button class="tab" role="tab" data-s="lab" aria-selected="false">研究室</button>
@@ -200,17 +247,26 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <button class="tab" role="tab" data-s="shop" aria-selected="false">商店街</button>
   </div>
 
+  <main class="workspace">
+    <div class="play-area">
+  <div class="stage">
+    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
+    <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
+  </div>
+  <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
+    </div>
+    <aside class="controls" aria-label="角色與場景操作">
   <section class="panel" id="p-home">
     <div class="msg" id="homeMsg">🏡 第一階段體驗：點擊地板讓柴犬走動，點擊家具會自動走近並互動。</div>
     <div class="row" id="homeDogs"><button class="btn ghost" data-dog="0">阿柴</button><button class="btn ghost" data-dog="1">二柴</button><button class="btn ghost" data-dog="2">小柴</button></div>
-    <p class="hint">這是第一階段可操作的等角像素地圖。家具可避障尋路；學校、廟口、商店街與原有存檔繼續保留在其他分頁。原本研究室也保留。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">這是第一階段可操作的等角像素地圖。家具可避障尋路；學校、廟口、商店街與原有存檔繼續保留在其他分頁。原本研究室也保留。</p></details>
   </section>
   <section class="panel" id="p-lab" hidden>
     <div class="row" id="chips"></div>
     <div class="msg" id="mLab"></div>
     <div class="g2"><button class="btn ghost" id="bLamp">關掉立燈</button><button class="btn violet" id="bSleep">睡到明天早上</button></div>
     <div class="inv" id="invList"></div>
-    <p class="hint">點地板讓選中的小柴犬走過去，點家具互動。二柴的發明會讓廟口的香腸攤更好做生意。上課拿到的獎狀會掛在研究室牆上。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點地板讓選中的小柴犬走過去，點家具互動。二柴的發明會讓廟口的香腸攤更好做生意。上課拿到的獎狀會掛在研究室牆上。</p></details>
   </section>
 
   <section class="panel" id="p-school" hidden>
@@ -220,17 +276,18 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <div class="g2" id="qAns"></div>
     <div class="g2"><button class="btn good" id="bClass">開始上課</button><button class="btn blue" id="bWake">叫醒阿柴</button></div>
     <div class="stats"><span>貼紙 <b id="sStars">0</b> 張</span><span>獎狀 <b id="sCert">0</b> 張</span><span>上過 <b id="sClasses">0</b> 堂課</span><span>燒肉便當 <b id="sBento">0</b> 個</span></div>
-    <p class="hint">一堂課五題。阿柴上課會打瞌睡，看到他睡著（頭上有 Z）要趕快叫醒，不然老師會點名。五題全對可以拿到一張獎狀。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">一堂課五題。阿柴上課會打瞌睡，看到他睡著（頭上有 Z）要趕快叫醒，不然老師會點名。五題全對可以拿到一張獎狀。</p></details>
   </section>
 
   <section class="panel" id="p-shop" hidden>
     <div class="msg" id="mShop"></div>
     <div class="row" id="shopChips"></div>
     <div class="inv" id="shopList"></div>
-    <p class="hint">點畫面上的店面，阿柴會走過去。生香腸拿去廟口烤，文具幫阿柴上課，鉤織配件會直接戴在小柴犬身上，家具會送進研究室。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點畫面上的店面，阿柴會走過去。生香腸拿去廟口烤，文具幫阿柴上課，鉤織配件會直接戴在小柴犬身上，家具會送進研究室。</p></details>
   </section>
 
   <section class="panel" id="p-temple" hidden>
+    <div class="row"><button type="button" class="btn ghost" id="bTempleView" aria-pressed="false" hidden>切換擺攤近景</button></div>
     <div class="msg" id="mTemple"></div>
     <div class="stats"><span>生香腸 <b id="tRaw">0</b></span><span>烤好的 <b id="tStock">0</b></span><span>碗裡 <b id="tBowl">0</b> 元</span><span>今天賣出 <b id="tSold">0</b> 條</span></div>
     <div class="g4" id="grills"></div>
@@ -245,8 +302,17 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
     </div>
-    <p class="hint">點烤架放香腸，變成深褐色、外框發亮時再點一次收起來。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p>
-  </section>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，變成深褐色、外框發亮時再點一次收起來。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
+  </section>  <details class="daily-card"><summary>🐾 今日小目標 · 完成可領 30 元</summary><div class="daily-content">
+    <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
+    <div class="daily-goals">
+      <div class="goal-line"><span class="goal-dot">1</span><span>到信義國小完成一堂課</span><b id="goalClass">待完成</b></div>
+      <div class="goal-line"><span class="goal-dot">2</span><span>今天在廟口賣出 3 條香腸</span><b id="goalSell">0 / 3</b></div>
+    </div>
+    <button class="btn daily-claim" id="bDaily" disabled>完成兩項目標後領取獎勵</button>
+  </div></details>
+    </aside>
+  </main>
 </div>
 
 <script>
@@ -477,11 +543,33 @@ function wallVine(c,side,u,z,length){
   for(let i=0;i<length;i++){const q=at(u+Math.sin(i*1.3)*.12,z-i*3);lineP(c,previous,q,'#718669');
     ellPx(c,q[0]+(i%2?2:-2),q[1],3,1.5,i%3?'#8ea37b':'#b2bf8f');previous=q;}
 }
+// Material accents use the existing projection and footprints, so paths stay clear.
+function materialGrain(c,project,x,y,w,d,z,seed=0){
+ for(let i=0;i<9;i++){
+  const u=x+.08+hash(seed+i*7)*Math.max(.01,w-.2),v=y+.08+hash(seed+i*13+1)*Math.max(.01,d-.2);
+  lineP(c,project(u,v,z),project(Math.min(x+w-.05,u+.12+hash(i+seed)*.2),v,z),i%3?'#b38b65':'#ecd0a0');
+ }
+}
+function glassJar(c,x,y,z,col){
+ const q=P(x,y,z);ellPx(c,q[0]+1,q[1],3,1,'rgba(48,39,32,.25)');
+ rect(c,q[0]-2,q[1]-7,5,7,shade(col,.8));rect(c,q[0]-1,q[1]-7,3,6,col);
+ rect(c,q[0]-2,q[1]-9,5,2,'#dac19a');rect(c,q[0]-1,q[1]-4,3,2,'#efe2bd');px(c,q[0]-1,q[1]-6,'#fff1d0');
+}
+function wovenCrate(c,x,y,z,col){
+ box(c,x,y,.65,.55,z,6,'#e0bc84',col,shade(col,.78));
+ for(let i=1;i<4;i++)lineP(c,P(x+i*.15,y+.55,z+1),P(x+i*.15,y+.55,z+5),'#edcf9c');
+ for(let i=0;i<3;i++){const q=P(x+.13+i*.19,y+.3,z+6);ellPx(c,q[0],q[1]-2,2,2,i%2?'#b66f54':'#ddb075');px(c,q[0],q[1]-4,'#749073');}
+}
 function labDetails(c){
   // Linen curtain edges and a tiny plant on the existing window sill.
   quad(c,0,3.02,0,3.25,26,56,'x','#eee0bd');quad(c,0,4.75,0,4.98,26,56,'x','#eee0bd');
   quad(c,0,3.09,0,3.13,27,55,'x','#cdbd9c');quad(c,0,4.85,0,4.89,27,55,'x','#cdbd9c');
   smallPlant(c,.22,4.55,24,false);wallVine(c,'x',.6,65,7);wallVine(c,'y',8.6,66,6);
+  // Bottles, labels and notes on high shelves add detail above the walking area.
+  box(c,6.9,0,1.3,.24,60,2,'#b99063','#98734f','#805e43');
+  for(let i=0;i<4;i++)glassJar(c,7.02+i*.29,.1,62,['#80a6a0','#bc8a79','#afad72','#8a9fae'][i]);
+  quad(c,3.2,0,4.05,0,51,62,'y','#ddc59d');
+  for(let j=0;j<3;j++)lineP(c,P(3.32,0,59-j*2),P(3.85,0,59-j*2),'#9f977d');
   // Stitches along the existing rug, without changing its footprint.
   for(let u=2.8;u<6.3;u+=.18)lineP(c,P(u,5.8),P(u,5.95),'#e6d0aa');
   const q=P(4.5,4.4);ellPx(c,q[0],q[1],4,2,'#cbd0ab');
@@ -498,6 +586,11 @@ function schoolDetails(c,ph){
   for(let u=.5;u<9.8;u+=.65){const a=P(u,0,65),b=P(u+.6,0,65),tip=P(u+.3,0,60);
     lineP(c,a,b,'#ab8c67');poly(c,[a,b,tip],['#a9bb97','#dfb29a','#b7cacc'][Math.floor(u*2)%3]);}
   wallVine(c,'x',7.4,63,6);
+  // Chalk, eraser and a hanging timetable stay on the board and wall.
+  for(let i=0;i<4;i++){const q=P(.16,2.1+i*.22,24);rect(c,q[0],q[1]-1,3,1,['#e8e0bd','#d7b39f','#a9c2b5','#e8e0bd'][i]);}
+  box(c,.02,6.05,.2,.35,24,3,'#ab956d','#8b8065','#746e59');
+  quad(c,8.25,0,8.95,0,30,45,'y','#f0dfbb');
+  for(let j=0;j<4;j++)lineP(c,P(8.35,0,42-j*3),P(8.8,0,42-j*3),j%2?'#a2b3a1':'#bd927a');
 }
 function templeDetails(c){
   // Moss occupies paving seams; decorations stay against the existing walls.
@@ -510,6 +603,9 @@ function templeDetails(c){
     const q=P(x+.32,0,31);pattern(c,['.x.','xxx','.x.','...','xxx','.x.','xxx'],q[0]-1,q[1],{x:'#b7745e'});
     lineP(c,P(x,0,11),P(x+.65,0,11),'#c7a16b');
   }
+  // Weathered roof seams and brass door fittings.
+  for(let u=.1;u<9.8;u+=.35){const a=P(u,0,61);px(c,a[0],a[1],'#edc997');}
+  for(const x of [4.55,5.45]){const q=P(x,0,20);ellPx(c,q[0],q[1],2,3,'#d7b572');px(c,q[0],q[1]-1,'#f2dba4');}
   wallVine(c,'x',1.4,28,5);wallVine(c,'x',7.6,28,7);
 }
 function shopDetails(c){
@@ -517,6 +613,14 @@ function shopDetails(c){
   for(const x of [.5,3.7,6.9]){
     box(c,x,0,.9,.3,43,3,'#c6a078','#ad835e','#987757');
     for(let i=0;i<3;i++)smallPlant(c,x+.15+i*.28,.2,46,i!==1);
+  }
+  // Goods stay inside the existing shop fronts, away from the street.
+  for(const base of [.5,3.75,7.0]){
+   for(let level=0;level<2;level++){
+    const z=8+level*12;box(c,base,.12,1.25,.32,z,2,'#c3a375','#a98b65','#917354');
+    for(let i=0;i<4;i++)glassJar(c,base+.12+i*.29,.28,z+2,['#bf8976','#8da69b','#d0af76','#9a8faa'][(i+level)%4]);
+   }
+   wovenCrate(c,base+.3,.2,0,'#ac8961');
   }
   wallVine(c,'x',5.05,63,9);wallVine(c,'x',7.7,63,8);
   for(let v=5.4;v<7.4;v+=.6){const q=P(0,v,9);pattern(c,['.pp.','pppp','.pp.','..g.','.gg.'],q[0],q[1],{p:'#c6a393',g:'#9aa785'});}
@@ -593,6 +697,49 @@ const LABDRAW={
     ellPx(c,q[0]-4+sw,q[1]-6,4,2.5,leaf);ellPx(c,q[0]+4+sw,q[1]-8,4,2.5,leaf);ellPx(c,q[0]+sw,q[1]-13,3,4,dk);line(c,q[0],q[1],q[0]+sw,q[1]-12,'#447a38');},
   cushion(c){const q=P(8,5,2);ellPx(c,q[0],q[1]+1,26,12,'#9d796e');ellPx(c,q[0],q[1],25,11.5,'#c49a8a');ellPx(c,q[0],q[1]-1,19,8,'#dbb5a0');ellPx(c,q[0]-4,q[1]-3,8,3,'#edcfb1');},
 };
+// Dress each existing prop after its base drawing, preserving depth order.
+for(const id of ['shelf','fridge','bench','crates','machine','books','bucket','cushion']){
+ const base=LABDRAW[id];LABDRAW[id]=function(c){base(c);
+  if(id==='shelf'){
+   for(const z of [3,17,31]){
+    for(let i=0;i<9;i++){
+     const x=1.12+i*.31,q=P(x,.64,z),h=5+(i%3)*2;
+     if(i%3===0){glassJar(c,x,.64,z,['#bc8f77','#83a59c','#a795b1'][Math.floor(i/3)]);}
+     else{rect(c,q[0]-1,q[1]-h,3,h,['#c19571','#85a19b','#bb8374','#a5ad83'][i%4]);
+      rect(c,q[0]-1,q[1]-h+1,3,1,'#e6c99d');px(c,q[0],q[1]-2,'#eadbc1');}
+    }
+    lineP(c,P(1,.66,z-1),P(4,.66,z-1),'#dfb788');
+   }
+  }else if(id==='fridge'){
+   for(const z of [4,27]){
+    quad(c,.08,1.96,.8,1.96,z,z+14,'y','#91a69a');
+    lineP(c,P(.12,1.97,z+13),P(.77,1.97,z+13),'#b9c7ae');
+   }
+   for(const z of [8,11,14])lineP(c,P(.14,1.97,z),P(.65,1.97,z),'#6f887f');
+   box(c,.13,1.14,.5,.45,44,3,'#b89976','#a38260','#836d53');
+   smallPlant(c,.4,1.4,47,false);
+  }else if(id==='bench'){
+   materialGrain(c,P,5,0,3,.95,17,3);
+   for(let i=0;i<3;i++){
+    const x=5.1+i*.95;quad(c,x,.94,x+.8,.94,7,12,'y','#ac865e');
+    lineP(c,P(x+.05,.95,11),P(x+.75,.95,11),'#dab184');
+    const q=P(x+.4,.96,9);rect(c,q[0]-1,q[1],3,1,'#6f6555');
+   }
+  }else if(id==='crates'){
+   for(const y of [6,7]){
+    lineP(c,P(.08,y+.96,2),P(.86,y+.96,12),'#97714c');
+    lineP(c,P(.08,y+.96,3),P(.86,y+.96,13),'#e2bf8b');
+    materialGrain(c,P,.08,y+.08,.8,.8,14,y*3);
+   }
+  }else if(id==='machine'){
+   const q=P(5.5,7.87,8);ellPx(c,q[0],q[1]-2,3,3,'#d2c6a6');
+   ellPx(c,q[0],q[1]-2,2,2,'#4a625e');line(c,q[0],q[1]-2,q[0]+1,q[1]-4,'#edbd85');
+   for(let i=0;i<3;i++){const a=P(5.25+i*.16,7.86,2);px(c,a[0],a[1],'#c2baaa');}
+  }else if(id==='cushion'){
+   for(let i=0;i<16;i++){const a=i*Math.PI/8,q=P(8,5,2);px(c,q[0]+Math.cos(a)*22,q[1]+Math.sin(a)*10,'#efd0ae');}
+  }
+ };
+}
 function bulbsDraw(c){const bulbs=[];for(let u=.4;u<GW;u+=.6)bulbs.push(P(u,0,63-Math.abs(Math.sin(u*Math.PI/1.8))*4));const nb=bulbs.length;for(let v=.6;v<GH;v+=.6)bulbs.push(P(0,v,63-Math.abs(Math.sin(v*Math.PI/1.8))*4));
   for(let i=0;i<bulbs.length-1;i++){if(i===nb-1)continue;lineP(c,bulbs[i],bulbs[i+1],'#2e1f18');}const bc=['#ffd860','#ff8a6a','#8ad0ff','#a8f08a'];
   bulbs.forEach((b,i)=>rect(c,b[0]-1,b[1]+1,2,2,bc[i%4]));return bulbs;}
@@ -735,7 +882,11 @@ function schoolRoom(c,ph){
 function chalk(c){if(!SCH.class||!SCH.class.q)return;const n=(SCH.class.qi*7+3)%5;for(let i=0;i<3+n%2;i++){const a=P(0,2.2+i*.55,40),b=P(0,2.6+i*.55,32);lineP(c,a,b,'#ffffff');}
   const a=P(0,4.6,38);ellPx(c,a[0],a[1],4,4,'#f3d06b');px(c,a[0]-2,a[1]-5,'#f3d06b');px(c,a[0]+2,a[1]-5,'#f3d06b');}
 function deskDraw(c,x,y){box(c,x+.12,y+.18,.76,.64,10,3,'#dfbc88','#c69e6e','#b28b61');box(c,x+.15,y+.25,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');box(c,x+.15,y+.7,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');box(c,x+.78,y+.7,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');
-  const q=P(x+.4,y+.5,13);rect(c,q[0]-2,q[1]-1,5,2,'#ffffff');}
+  materialGrain(c,P,x+.12,y+.18,.76,.64,13,x*9+y);
+  poly(c,[P(x+.25,y+.3,13.5),P(x+.58,y+.3,13.5),P(x+.58,y+.62,13.5),P(x+.25,y+.62,13.5)],'#f2e4c5');
+  lineP(c,P(x+.41,y+.32,14),P(x+.41,y+.6,14),'#c6b89b');
+  lineP(c,P(x+.64,y+.3,14),P(x+.7,y+.66,14),'#c98a64');
+  const q=P(x+.3,y+.51,14);px(c,q[0],q[1],'#90a5a2');}
 function chairDraw(c,x,y){box(c,x+.25,y+.25,.5,.5,0,7,'#9baa8e','#8b9e80','#7d9274');box(c,x+.7,y+.25,.08,.5,7,10,'#9baa8e','#8b9e80','#7d9274');}
 SCH.draw=function(ph){
   g.drawImage(cached('school'+ph,c=>schoolRoom(c,ph)),0,0);chalk(g);
@@ -805,6 +956,19 @@ SCH.tap=function(bx,by){const r=SCH.abox;if(r&&bx>r[0]&&bx<r[0]+34&&by>r[1]&&by<
 // TEMPLE
 // ======================================================================
 const TP={open:false,slots:[0,0,0,0].map(()=>({on:false,c:0})),stock:0,q:[],spawn:2,fled:0,truckDX:0,karaAt:-99,reveal:0,trick:40,bowlT:6,dogs:[mkDog('c',3,5)],msgT:0};
+// Keep rendering and pointer input on the same camera.
+TP.focused=false;
+TP.camera=()=>TP.focused?{scale:1.5,x:205,y:151}:{scale:1,x:W/2,y:H/2};
+TP.toWorld=(x,y)=>{const c=TP.camera();return [(x-W/2)/c.scale+c.x,(y-H/2)/c.scale+c.y];};
+function setTempleView(focused){
+ TP.focused=TP.open&&focused;
+ const button=$('bTempleView');button.hidden=!TP.open;
+ button.textContent=TP.focused?'返回廟口全景':'切換擺攤近景';
+ button.setAttribute('aria-pressed',String(TP.focused));
+ if(cur==='temple'){
+  $('sceneCaption').textContent=TP.focused?'香腸攤近景 · 點烤架放香腸或收起，招呼第一位客人':sceneInfo.temple.caption;
+ }
+}
 const TRUCK={x:6.6,y:2.6,w:2.2,d:1.8};
 const SPOTS=[[6.2,5.0],[5.5,5.8],[4.8,6.6],[4.1,7.3],[3.4,7.8]];
 TP.blocked=(x,y)=>x<0||y<0||x>=GW||y>=GH||(x>=6&&x<=8&&y>=2&&y<=4)||(x===4&&y===2)||(x===0&&y>=3&&y<=7)||(y===0);
@@ -862,21 +1026,34 @@ function truckDraw(c){
   box(c,x+w,y+.25,.55,1.1,8,16,'#a86a3a','#9a6235','#8a552c');
   {const f=P(x+w+.55,y+.8,12);ellPx(c,f[0],f[1],5,4,'#f7f0e4');rect(c,f[0]+1,f[1]-3,3,2,'#1d1714');const e=P(x+w+.55,y+.55,18);rect(c,e[0],e[1],2,2,'#1d1714');
     const ear=P(x+w+.3,y+1.3,22);poly(c,[[ear[0],ear[1]],[ear[0]+5,ear[1]+1],[ear[0]+4,ear[1]+12],[ear[0]-1,ear[1]+9]],'#5d3a1f');}
+  // Rivets, timber trim and a striped awning give the cart a crafted finish.
+  for(let u=.15;u<w;u+=.32){const q=P(x+u,y+d,7);px(c,q[0],q[1],'#a4927c');px(c,q[0],q[1]-1,'#fff2d3');}
+  for(let z=6;z<22;z+=4)lineP(c,P(x+w,y+.35,z),P(x+w,y+1.3,z),'#d0c2aa');
+  box(c,x+.05,y+d-.03,1.35,.2,22,2,'#c69b6d','#a47b55','#8e6749');
+  for(let u=0;u<1.3;u+=.2)poly(c,[P(x+.05+u,y+d-.03,24),P(x+.24+u,y+d-.03,24),P(x+.24+u,y+d+.18,22),P(x+.05+u,y+d+.18,22)],Math.round(u*5)%2?'#e9dcc1':'#b77a62');
   // grill on top
   box(c,x+.3,y+.25,1.5,.9,26,2,'#3a3330','#2a2420','#22201c');
-  TP.slots.forEach((s,i)=>{const q=P(x+.5+i*.33,y+.7,28);if(s.on){const col=sCol(s.c);rect(c,q[0]-3,q[1]-1,6,2,col);if(s.c>burnAt()){c.globalAlpha=.5;ellPx(c,q[0],q[1]-5-Math.sin(T*4)*2,2,2,'#555');c.globalAlpha=1;}}});
+  for(let u=.34;u<1.75;u+=.12)lineP(c,P(x+u,y+.3,28),P(x+u,y+1.08,28),'#747570');
+  lineP(c,P(x+.3,y+.25,28),P(x+1.8,y+.25,28),'#c6c2af');
+  TP.slots.forEach((s,i)=>{const q=P(x+.5+i*.33,y+.7,28);if(s.on){const col=sCol(s.c);rect(c,q[0]-3,q[1]-1,6,2,col);px(c,q[0]-2,q[1]-1,shade(col,1.3));if(s.c>.5&&s.c<burnAt()){px(c,q[0],q[1],'#713e30');px(c,q[0]+2,q[1],'#713e30');}if(s.c>burnAt()){c.globalAlpha=.5;ellPx(c,q[0],q[1]-5-Math.sin(T*4)*2,2,2,'#555');c.globalAlpha=1;}}});
   if(TP.open)for(let i=0;i<3;i++){const s=(T*.7+i*.33)%1,q=P(x+1,y+.6,30);c.globalAlpha=.4*(1-s);ellPx(c,q[0]+Math.sin(T*2+i)*3,q[1]-s*20,2+s*2,1.5+s,'#f0ece6');}c.globalAlpha=1;
   // sign
   if(S.inv.sign){const q=P(x+w*.3,y+d,38);rect(c,q[0]-1,q[1]-9,20,10,'#2b211c');const on=Math.floor(T*2)%4!==0;glyphs(c,q[0]+2,q[1]-7,2,on?'#ff7ab8':'#7a3a5a');}
   // flag
   {const q=P(x+w*.9,y+d,26);line(c,q[0],q[1],q[0],q[1]-16,'#5a5e66');rect(c,q[0]+1,q[1]-16,7,5,'#bd806b');}
 }
-function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;poly(c,[P(x+.05,y+d+.18,12),P(x+1.4,y+d+.18,12),P(x+1.4,y+d,10),P(x+.05,y+d,10)],'#bd806b');
+function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;
+  // Napkin box, sauce bottles and a timber serving ledge travel with the truck.
+  box(c,x+.12,y+d,.35,.28,12,4,'#d1b18c','#b48e69','#967351');
+  {const q=P(x+.27,y+d+.15,16);rect(c,q[0]-2,q[1]-3,4,3,'#f3e7cc');px(c,q[0],q[1]-4,'#f3e7cc');}
+  for(let i=0;i<2;i++){const q=P(x+1.1+i*.22,y+d+.08,12);rect(c,q[0]-1,q[1]-6,3,6,i?'#c8a366':'#b96f58');rect(c,q[0],q[1]-8,1,2,'#ead8b0');}
+poly(c,[P(x+.05,y+d+.18,12),P(x+1.4,y+d+.18,12),P(x+1.4,y+d,10),P(x+.05,y+d,10)],'#bd806b');
   for(let i=0;i<4;i++){const q=P(x+.25+i*.32,y+d,22);rect(c,q[0]-3,q[1]-1,6,3,i%2?'#f6ead2':'#bd806b');}
   if(TP.stock>0){const q=P(x+.4,y+d+.15,12);for(let i=0;i<Math.min(4,TP.stock);i++)rect(c,q[0]+i*4,q[1]-2,3,2,'#a8452c');}}
 const burnAt=()=>S.inv.flipper?1.7:1.25;
 function sCol(v){if(v<.5)return '#e7899a';if(v<.85)return '#c8664a';if(v<burnAt())return '#a8452c';return '#3a2a24';}
 TP.draw=function(ph){
+  const camera=TP.camera();g.save();g.translate(W/2,H/2);g.scale(camera.scale,camera.scale);g.translate(-camera.x,-camera.y);
   g.drawImage(cached('temple'+ph,c=>templeRoom(c,ph)),0,0);
   const lp=lanternsDraw(g,ph);bowlDraw(g);
   const list=[];
@@ -903,6 +1080,7 @@ TP.draw=function(ph){
   {const q=P(4.5,2.5,14);gl.push([q[0],q[1],24,'rgba(255,170,90,A)',ph==='night'?.25:.08]);}
   {const q=P(.95,6.2,18);gl.push([q[0],q[1],30,'rgba(255,170,90,A)',ph==='night'?.3:.1]);}
   lighting(ph,gl);
+  g.restore();
 };
 function tpSay(who,s){$('mTemple').innerHTML=who?'<b>'+who+'</b>：'+s:s;TP.msgT=6;}
 function aSay(s,icon){tpSay('阿柴',s);if(icon){TP.aIcon=icon;TP.aIconT=2;}}
@@ -953,14 +1131,22 @@ function hit(){const f=front();if(!TP.open||TP.fled>0)return;if(!f){aSay('香腸
 function flee(){if(!TP.open||TP.fled>0)return;TP.fled=S.inv.turbo?3:5;const cop=TP.q.some(p=>p.kind==='police'&&p.state!=='leave');TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});
   aSay(cop?'小獵犬號一溜煙開走，躲過警察！快～點～開！':'快閃了，可是客人也都散了。怎麼沒有警察？','excl');}
 function kara(){if(T-TP.karaAt<40)return;TP.karaAt=T;TP.reveal=8;setIcon(TP.dogs[0],'spark',3);tpSay('','卡拉發動！二柴和小柴的感應傳過來，柴犬獵人身邊浮出紅框。');}
-function toggleOpen(){TP.open=!TP.open;if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,3);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
+function toggleOpen(){TP.open=!TP.open;setTempleView(TP.open);if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,3);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
   else{TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});aSay('收攤了。今天賣了 '+S.soldToday+' 條，那沒什麼。');}syncTemple();save();}
 function collectBowl(){if(S.bowl<=0){tpSay('','碗裡空空的。開店的時候，來拜拜的人會順手丟零錢。');return;}const v=S.bowl;S.money+=v;S.bowl=0;aSay('碗裡有 '+v+' 元，收起來！','coin');save();}
 function bbq(){if(S.money<200){aSay('還差 '+(200-S.money)+' 元……快～點～賺錢！','anger');return;}S.money-=200;S.bbq++;const n=8+Math.floor(Math.random()*10);
   aSay('去隔壁燒肉吃到飽，吃了 '+n+' 盤還說：「再來一盤！」','heart');save();}
 function grillTap(i){if(!TP.open){tpSay('','先按「開店」再烤香腸。');return;}const s=TP.slots[i];
   if(!s.on){if(S.raw<=0){aSay('沒有生香腸了！去商店街的肉舖買。快～點～！','anger');return;}S.raw--;s.on=true;s.c=0;}else if(s.c>=burnAt()){s.on=false;aSay('烤焦了！怎麼那麼慢！','anger');}else if(s.c>=.85){s.on=false;TP.stock++;}else tpSay('','還沒熟，再等一下。');syncTemple();}
-TP.tap=function(bx,by){const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-b[1])<6){collectBowl();return;}
+TP.tap=function(bx,by){
+  [bx,by]=TP.toWorld(bx,by);
+  // The four visible sausages remain clickable in either view.
+  if(TP.open&&TP.fled<=0){
+   const picks=TP.slots.map((_,i)=>{const p=P(TRUCK.x+TP.truckDX+.5+i*.33,TRUCK.y+.7,28);return {i,dx:bx-p[0],dy:by-p[1]};})
+    .filter(p=>Math.abs(p.dx)<=4&&Math.abs(p.dy)<=4).sort((a,b)=>a.dx*a.dx+a.dy*a.dy-b.dx*b.dx-b.dy*b.dy);
+   if(picks.length){grillTap(picks[0].i);return;}
+  }
+  const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-b[1])<6){collectBowl();return;}
   const d=TP.dogs[0],dp=P(d.x+.5,d.y+.5);if(Math.abs(bx-dp[0])<12&&by>dp[1]-22&&by<dp[1]+3){setIcon(d,'star',2);tpSay('小柴','塔搭！');return;}
   const w=TP.winPos;if(w&&Math.abs(bx-w[0])<16&&by>w[1]-16&&by<w[1]+2){aSay(pick(['快～點～買香腸！','那沒什麼，我烤的最好吃。','今天也要賺錢去吃燒肉。']),'note');return;}
   const s=P(.95,6.2,16);if(Math.abs(bx-s[0])<16&&Math.abs(by-s[1])<16){bbq();return;}
@@ -970,7 +1156,7 @@ function syncTemple(){const st=$('grills');
   if(!st.children.length){st.innerHTML=[0,1,2,3].map(i=>'<button class="grill" data-g="'+i+'"><i></i><span></span></button>').join('');st.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>grillTap(+b.dataset.g));}
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'好了！':'焦了';});
   $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
-  $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
+  $('bOpen').textContent=TP.open?'收攤':'開店擺攤';$('bOpen').className='btn '+(TP.open?'ghost':'good');
   const kl=Math.max(0,40-(T-TP.karaAt));$('bKara').disabled=kl>0||!TP.open;$('karaS').textContent=kl>0?'冷卻 '+Math.ceil(kl)+' 秒':'看穿獵人';
   ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bBBQ').disabled=S.money<200;
   if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'這裡是廟口。阿柴的小獵犬號停在廟前，按「開店」開始賣香腸。';}
@@ -1159,12 +1345,35 @@ const HOME=(()=>{
  dogs.forEach(d=>{d.cell={x:d.x,y:d.y};d.route=[];d.target=null;});
  let selected=0,marker=null;
  const panel=$('p-home');
- panel.querySelector('.hint').textContent='點空地散步，點家具互動；點柴犬或名字切換角色。左側綠色門口可以走到研究室。';
+ panel.querySelector('.hint').textContent='點空地散步，點家具後選擇睡覺、吃點心或看看；點柴犬或名字切換角色。左側綠色門口可以走到研究室。';
+ const interaction=document.createElement('section');
+ interaction.hidden=true;interaction.setAttribute('aria-label','物件互動選項');
+ interaction.innerHTML='<p class="sub" id="homeObjectTitle"></p><div class="row" id="homeObjectActions"></div>';
+ panel.insertBefore(interaction,panel.querySelector('.instructions'));
+ let chosenObject=null;
+ function closeOptions(){chosenObject=null;interaction.hidden=true;}
+ function options(o){
+  chosenObject=o;interaction.hidden=false;
+  $('homeObjectTitle').textContent=o.name+' · 想讓'+NAMES[dogs[selected].id]+'做什麼？';
+  const actions=$('homeObjectActions');actions.replaceChildren();
+  const choices=o.id==='sofa'||o.id==='bed'?[['sleep','躺下睡覺'],['look','看看']]:o.id==='table'?[['eat','吃點心'],['look','看看']]:[['look','看看']];
+  choices.push(['cancel','取消']);
+  choices.forEach(([action,label])=>{const b=document.createElement('button');b.type='button';b.className='btn'+(action==='cancel'?' ghost':'');b.textContent=label;b.onclick=()=>{if(action==='cancel'){closeOptions();return;}closeOptions();moveTo(o,action);};actions.appendChild(b);});
+  say('點選下方選項，讓柴犬和'+o.name+'互動。');
+ }
+ function stopAction(d){d.homeAction=null;d.target=null;d.exitArrival=null;}
+ function arrive(d){
+  const o=d.target;if(!o)return;d.target=null;
+  if(d.pendingAction==='sleep'||d.pendingAction==='eat'){
+   d.homeAction={kind:d.pendingAction,object:o,started:T};
+   if(d===dogs[selected])say(NAMES[d.id]+(d.pendingAction==='sleep'?'在'+o.name+'上睡著了。點空地就能起床。':'正在餐桌旁吃點心！點空地就能離開。'));
+  }else if(d===dogs[selected])say('✨ '+o.txt);
+ }
  const buttons=[...document.querySelectorAll('#homeDogs button')];
  buttons.forEach(b=>{b.setAttribute('aria-pressed',b.dataset.dog==='0'?'true':'false');});
  const say=msg=>{$('homeMsg').textContent=msg;};
  say('陽光、木頭香，還有三隻小柴犬。點一塊空地，開始今天的小小散步。');
- function select(i){cancelJourney();selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
+ function select(i){cancelJourney();closeOptions();selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
  buttons.forEach((b,i)=>b.onclick=()=>select(i));
  buttons[0].classList.remove('ghost');
 
@@ -1237,11 +1446,21 @@ const HOME=(()=>{
   const paw=iso(4,4.15);ellPx(c,paw[0],paw[1],4,2,'#cfd0ad');
   for(const [x,y] of [[-4,-3],[0,-4],[4,-3]])ellPx(c,paw[0]+x,paw[1]+y,1,1,'#cfd0ad');
   if(ph!=='night')surface(c,[iso(.3,1.4),iso(.3,3.3),iso(3.5,5.4),iso(3.5,3.5)],'rgba(255,235,176,.16)');
+  // Two wall shelves hold jars, stacked books and a trailing plant.
+  cube(c,4.4,0,1.15,.28,31,2,'#b38a60');
+  for(let i=0;i<4;i++){
+   const q=iso(4.52+i*.25,.14,33);rect(c,q[0]-1,q[1]-6-i%2,3,6+i%2,['#b78071','#8daba1','#d0b07b','#9e95aa'][i]);
+   rect(c,q[0]-1,q[1]-7-i%2,3,1,'#e1caa0');px(c,q[0],q[1]-4,'#eee0bb');
+  }
+  for(let i=0;i<3;i++)cube(c,2.55+i*.03,.12,.55,.34,37+i*2,2,['#b78370','#d4b584','#87a39a'][i]);
+  for(let u=.3;u<7;u+=.2){const q=iso(0,u,3);px(c,q[0],q[1],'#b8956b');}
   drawExit(c,iso,EXITS.home);
  }
  const backgrounds={};
  function furniture(c,o){
   const {x,y,w,h}=o;
+  // Contact shadows are drawn with their furniture, before the solid surfaces.
+  surface(c,[iso(x+.1,y+.2),iso(x+w+.12,y+.2),iso(x+w+.12,y+h+.13),iso(x+.1,y+h+.13)],'rgba(63,47,34,.16)');
   if(o.id==='sofa'){
    cube(c,x+.12,y+.15,w-.24,h-.3,0,4,'#976e4c');
    cube(c,x,y,w,.35,4,19,'#829582');
@@ -1249,6 +1468,15 @@ const HOME=(()=>{
    for(let i=0;i<2;i++){cube(c,x+.22+i*.82,y+.48,.75,1.2,12,2,'#b2bfa0');cube(c,x+.3+i*.8,y+.42,.62,.36,14,5,i?'#d7b392':'#e0d4ad');}
    cube(c,x,y+.25,.22,h-.25,4,12,'#8fa18a');cube(c,x+w-.22,y+.25,.22,h-.25,4,12,'#8fa18a');
    tile(c,x+.3,y+1.1,.5,.8,14.5,'#d6b392');for(let k=0;k<3;k++)lineP(c,iso(x+.35+k*.14,y+1.1,15),iso(x+.35+k*.14,y+1.9,15),'#f0d2aa');
+   // Woven upholstery: cushion seams, buttons, piping and a knitted throw.
+   for(let i=0;i<2;i++){
+    const u=x+.23+i*.82;
+    lineP(c,iso(u,y+.52,14.5),iso(u+.7,y+.52,14.5),'#d0d0ac');
+    lineP(c,iso(u+.7,y+.52,14.5),iso(u+.7,y+1.63,14.5),'#7f927b');
+    for(let j=0;j<3;j++){const q=iso(u+.18+j*.2,y+.85,14.5);px(c,q[0],q[1],'#8e9e85');}
+   }
+   for(let j=0;j<7;j++)lineP(c,iso(x+.33+j*.065,y+1.12,15),iso(x+.33+j*.065,y+1.85,15),'#edd0aa');
+   for(let j=0;j<4;j++)lineP(c,iso(x+.32,y+1.18+j*.17,15),iso(x+.78,y+1.18+j*.17,15),'#b78c72');
   }else if(o.id==='shelf'){
    cube(c,x+.1,y+.1,w-.2,h-.2,0,35,'#b4895c');
    // The front face uses actual isometric coordinates, so books sit on their shelves.
@@ -1262,28 +1490,56 @@ const HOME=(()=>{
     }
     lineP(c,iso(x+.15,y+h,z-1),iso(x+w-.15,y+h,z-1),'#d9b27e');
    }
+   for(let row=0;row<3;row++)for(let i=0;i<6;i++){
+    const u=x+.25+i*.25,z=4+row*10;
+    lineP(c,iso(u+.035,y+h-.13,z+1),iso(u+.035,y+h-.13,z+4+(i+row)%3),'#ead8b2');
+    const q=iso(u+.08,y+h-.14,z+3);px(c,q[0],q[1],'#75644e');
+   }
+   materialGrain(c,iso,x+.1,y+.1,w-.2,h-.2,35,7);
    pot(c,x+.45,y+.65,35,true);cube(c,x+1.1,y+.3,.5,.5,35,3,'#d5b782');
   }else if(o.id==='bed'){
    cube(c,x+.1,y+.1,w-.2,h-.2,0,4,'#ae7e64');tile(c,x+.18,y+.15,w-.36,h-.3,4.5,'#c9907f','#e9c4a4');
    cube(c,x+.2,y+.2,.48,.58,4,3,'#ebd8b8');tile(c,x+.85,y+.2,.85,.6,5,'#dab09a');
    for(let i=0;i<4;i++)lineP(c,iso(x+.93+i*.17,y+.25,5.5),iso(x+.93+i*.17,y+.73,5.5),'#f0d2b0');
+   // Stitched hem and a small paw embroidered on the sleeping pad.
+   for(let u=x+.24;u<x+w-.2;u+=.14){const q=iso(u,y+h-.17,5);px(c,q[0],q[1],'#f2d3b0');}
+   const paw=iso(x+1.2,y+.5,5.5);ellPx(c,paw[0],paw[1],2,1,'#b47d70');
+   for(const dx of [-2,0,2])px(c,paw[0]+dx,paw[1]-2,'#b47d70');
   }else if(o.id==='table'){
    for(const [dx,dy] of [[.12,.12],[1.7,.12],[.12,.72],[1.7,.72]])cube(c,x+dx,y+dy,.14,.14,0,12,'#92684b');
    cube(c,x,y,w,h,12,3,'#d3ac77');tile(c,x+.75,y+.02,.48,.96,15.2,'#e8d6b2');
+   materialGrain(c,iso,x,y,w,h,15.1,13);
+   for(let u=x+.79;u<x+1.2;u+=.09)lineP(c,iso(u,y+.05,15.5),iso(u,y+.95,15.5),'#d1bb99');
    const p=iso(x+.48,y+.5,16);ellPx(c,p[0],p[1],6,3,'#f3e5c5');ellPx(c,p[0]-1,p[1]-1,3,2,'#bd8550');rect(c,p[0]-2,p[1]-2,2,1,'#e4b46b');
    const cup=iso(x+1.45,y+.45,16);rect(c,cup[0]-2,cup[1]-5,5,5,'#7f9c8e');rect(c,cup[0]+3,cup[1]-4,2,3,'#adc0a5');rect(c,cup[0]-1,cup[1]-5,3,1,'#665044');
    for(let i=0;i<2;i++){const t=(T*.35+i*.5)%1;c.globalAlpha=.45*(1-t);px(c,cup[0]+Math.round(Math.sin(t*5+i)),cup[1]-7-t*7,'#fff2d5');}c.globalAlpha=1;
-  }else if(o.id==='plant'){pot(c,x+.5,y+.5,0,false);}
+   const book=iso(x+1.12,y+.7,16);rect(c,book[0]-3,book[1]-3,6,3,'#82968b');rect(c,book[0]-2,book[1]-2,5,1,'#e7d9b9');
+  }else if(o.id==='plant'){
+   pot(c,x+.5,y+.5,0,false);
+   const q=iso(x+.5,y+.5);ellPx(c,q[0],q[1]-7,4,1,'#694e3a');
+   for(let i=0;i<4;i++)px(c,q[0]-2+i*2,q[1]-7+(i%2),'#a38d61');
+  }
   else if(o.id==='lamp'){
    const p=iso(x+.5,y+.5);ellPx(c,p[0],p[1],5,2,'#9a7855');line(c,p[0],p[1]-1,p[0],p[1]-25,'#846747');
    surface(c,[[p[0]-7,p[1]-23],[p[0]+7,p[1]-23],[p[0]+4,p[1]-33],[p[0]-4,p[1]-33]],'#efd4a2','#ad8a60');rect(c,p[0]-5,p[1]-24,10,1,'#fff0c2');
   }
  }
  function drawDog(c,d,i){
-  const walking=d.route.length>0,fr=walking?Math.floor(T*8)%2:0,p=iso(d.x+.5,d.y+.5);
+  const action=d.homeAction,o=action&&action.object;
+  const sleeping=action&&action.kind==='sleep',eating=action&&action.kind==='eat';
+  const walking=d.route.length>0,fr=walking?Math.floor(T*8)%2:0;
+  const p=sleeping?iso(o.x+o.w/2,o.y+o.h*.65,o.id==='sofa'?15:6):iso(d.x+.5,d.y+.5);
   ellPx(c,p[0],p[1]+1,10,3,'rgba(76,53,37,.2)');
   const x=Math.round(p[0]-17),y=Math.round(p[1]-26-(walking?fr:Math.sin(T*2+i)>.8?1:0));
-  c.save();if(d.dir<0){c.translate(x*2+34,0);c.scale(-1,1);}c.drawImage(SPR[d.id][fr],x,y);drawAcc(c,d.id,x,y,false);c.restore();
+  c.save();if(d.dir<0){c.translate(x*2+34,0);c.scale(-1,1);}if(sleeping){
+   c.drawImage(SPR[d.id][0],x,y+11,34,17);
+   rect(c,x+22,y+18,4,1,'#49352a');
+  }else{
+   const bob=eating?Math.round(Math.sin(T*9)):0;
+   c.drawImage(SPR[d.id][fr],x,y+bob);drawAcc(c,d.id,x,y+bob,false);
+  }c.restore();
+  if(sleeping){c.fillStyle='#fff4d2';c.font='bold 9px sans-serif';c.fillText('Z',p[0]+8,p[1]-21-Math.floor((T%2)*3));}
+  if(eating){ellPx(c,p[0]+(d.dir<0?-12:12),p[1]-6,5,2,'#f3e5c5');ellPx(c,p[0]+(d.dir<0?-12:12),p[1]-7,3,1,'#bd8550');}
   if(i===selected){const yy=y-5;pattern(c,['..x..','.xxx.','xxxxx','..x..'],Math.round(p[0]-2),yy,{x:'#d7a557'});}
  }
  function pathTo(start,tx,ty){
@@ -1299,7 +1555,7 @@ const HOME=(()=>{
   const a=iso(o.x,o.y,o.height),b=iso(o.x+o.w,o.y,o.height),d=iso(o.x,o.y+o.h,o.height),e=iso(o.x+o.w,o.y+o.h,o.height);
   return [[a,b,e,d],[d,e,iso(o.x+o.w,o.y+o.h),iso(o.x,o.y+o.h)],[b,e,iso(o.x+o.w,o.y+o.h),iso(o.x+o.w,o.y)]].some(points=>inPoly(bx,by,points));
  }
- function layers(){return [...objects.map(o=>({depth:o.x+o.y+o.w+o.h-.1,o})),...dogs.map((d,i)=>({depth:d.x+d.y+1,d,i}))].sort((a,b)=>a.depth-b.depth);}
+ function layers(){return [...objects.map(o=>({depth:o.x+o.y+o.w+o.h-.1,o})),...dogs.map((d,i)=>({depth:d.homeAction&&d.homeAction.kind==='sleep'?d.homeAction.object.x+d.homeAction.object.y+d.homeAction.object.w+d.homeAction.object.h:d.x+d.y+1,d,i}))].sort((a,b)=>a.depth-b.depth);}
  function tap(bx,by){
   const d=dogs[selected];let obj=null;
   // Pick front-to-back in the same order as rendering, including elevated furniture faces.
@@ -1308,6 +1564,11 @@ const HOME=(()=>{
    else{const p=iso(item.d.x+.5,item.d.y+.5);if(Math.abs(bx-p[0])<13&&by>p[1]-26&&by<p[1]+2){select(item.i);return;}}
   }
   const u=(bx-ox)/tw,v=(by-oy)/th,gx=Math.floor((u+v)/2),gy=Math.floor((v-u)/2);
+  if(obj){options(obj);return;}
+  closeOptions();moveTo(null,null,gx,gy);
+ }
+ function moveTo(obj,action,gx,gy){
+  const d=dogs[selected];
   // Complete the current edge before rerouting: no rounding into a wall or snapping backwards.
   const prefix=d.route.length?[d.route[0]]:[],start=prefix[0]||d.cell;let route=null;
   if(obj){
@@ -1319,18 +1580,19 @@ const HOME=(()=>{
    candidates.sort((a,b)=>a.length-b.length);route=candidates[0];
    if(!route){say('這裡暫時走不過去，換一邊試試看。');return;}
   }else{if(blocked(gx,gy))return;route=pathTo(start,gx,gy);if(!route)return;}
-  d.route=prefix.concat(route);d.target=obj;
+  stopAction(d);d.pendingAction=action;d.route=prefix.concat(route);d.target=obj;
   const end=d.route[d.route.length-1]||d.cell;marker={x:end.x,y:end.y,until:T+2};
   say(obj?'🐾 '+NAMES[d.id]+'正在走向'+obj.name+'…':'🐾 '+NAMES[d.id]+'出發散步！');
-  if(!d.route.length&&obj){say('✨ '+obj.txt);d.target=null;}
+  if(!d.route.length&&obj)arrive(d);
  }
  function update(dt){
   dogs.forEach((d,i)=>{
+   if(d.homeAction&&d.homeAction.kind==='eat'&&T-d.homeAction.started>8){d.homeAction=null;if(i===selected)say(NAMES[d.id]+'吃完點心，心滿意足！');}
    if(!d.route.length)return;
    const next=d.route[0],dx=next.x-d.x,dy=next.y-d.y,dist=Math.hypot(dx,dy),step=2.6*dt;
    if(Math.abs(dx-dy)>.001)d.dir=dx-dy>0?1:-1;
    if(dist<=step){d.x=next.x;d.y=next.y;d.cell={x:next.x,y:next.y};d.route.shift();
-    if(!d.route.length&&d.target){if(i===selected)say('✨ '+d.target.txt);d.target=null;}
+    if(!d.route.length&&d.target)arrive(d);
     if(!d.route.length&&d.exitArrival){const done=d.exitArrival;d.exitArrival=null;done();}
    }else{d.x+=dx/dist*step;d.y+=dy/dist*step;}
   });
@@ -1347,6 +1609,7 @@ const HOME=(()=>{
   c.restore();
  }
  function walkToExit(done){
+  closeOptions();stopAction(dogs[selected]);
   const d=dogs[selected],prefix=d.route.length?[d.route[0]]:[],start=prefix[0]||d.cell,e=EXITS.home;
   const path=pathTo(start,e.x,e.y);if(!path)return false;
   d.route=prefix.concat(path);d.target=null;d.exitArrival=done;
@@ -1359,9 +1622,9 @@ const HOME=(()=>{
  }
  function enter(id){
   const i=dogs.findIndex(d=>d.id===id),d=dogs[i<0?0:i],e=EXITS.home;
-  d.x=e.x;d.y=e.y;d.cell={x:e.x,y:e.y};d.route=[];d.target=null;d.exitArrival=null;select(i<0?0:i);
+  d.x=e.x;d.y=e.y;d.cell={x:e.x,y:e.y};d.route=[];stopAction(d);select(i<0?0:i);
  }
- return {draw,tap,update,walkToExit,cancelExit,enter,selectedId:()=>dogs[selected].id,
+ return {draw,tap,update,walkToExit,cancelExit,enter,closeOptions,selectedId:()=>dogs[selected].id,
   exitHit:(x,y)=>inPoly(x,y,exitFace(iso,EXITS.home)),
   exitLabel:()=>iso(0,(EXITS.home.start+EXITS.home.end)/2,EXITS.home.height+5)};
 })();
@@ -1429,7 +1692,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
 }});
 function showScene(s){
  if(!Object.prototype.hasOwnProperty.call(SC,s))return;
- cancelJourney();cur=s;setMap(false);
+ cancelJourney();HOME.closeOptions();cur=s;setMap(false);
  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));
  for(const k in SC)$('p-'+k).hidden=k!==s;
  $('sceneName').textContent=sceneInfo[s].name;$('sceneCaption').textContent=sceneInfo[s].caption;travelStatus.textContent=sceneInfo[s].hint;
@@ -1445,11 +1708,12 @@ function showScene(s){
   doorLabel.style.left=p[0]/W*100+'%';doorLabel.style.top=p[1]/H*100+'%';
  }
  if(s==='school'){if(!SCH.class)schSay('t',phase()==='night'?'晚上學校沒開，明天早上再來吧。':'阿柴，準備好就可以上課了。');renderQ();syncSchoolBtns();}
- if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple')syncTemple();if(s==='shop'){SPS.sig='';SPS.sync();}
+ if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple'){setTempleView(TP.focused);syncTemple();}if(s==='shop'){SPS.sig='';SPS.sync();}
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showScene(b.dataset.s));
 document.querySelectorAll('[data-travel]').forEach(b=>b.onclick=()=>showScene(b.dataset.travel));
 const chips=$('chips');[['a','阿柴','急性子・愛吃'],['b','二柴','發明家'],['c','小柴','魔術師']].forEach(([id,n,t],i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=n+'<small>'+t+'</small>';b.onclick=()=>selectDog(i);chips.appendChild(b);});
+$('bTempleView').onclick=()=>setTempleView(!TP.focused);
 $('bLamp').onclick=()=>{toggleLamp();$('mLab').textContent=S.lamp?'立燈打開了。':'立燈關掉了。';};
 $('bSleep').onclick=()=>{if(phase()!=='night')return;cancelJourney();S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
 $('bClass').onclick=startClass;$('bWake').onclick=wake;
@@ -1474,3 +1738,4 @@ showScene('home');requestAnimationFrame(frame);
 </script>
 </body>
 </html>
+
