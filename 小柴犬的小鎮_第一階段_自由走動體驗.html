@@ -287,6 +287,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   </section>
 
   <section class="panel" id="p-temple" hidden>
+    <div class="row"><button type="button" class="btn ghost" id="bTempleView" aria-pressed="false" hidden>切換擺攤近景</button></div>
     <div class="msg" id="mTemple"></div>
     <div class="stats"><span>生香腸 <b id="tRaw">0</b></span><span>烤好的 <b id="tStock">0</b></span><span>碗裡 <b id="tBowl">0</b> 元</span><span>今天賣出 <b id="tSold">0</b> 條</span></div>
     <div class="g4" id="grills"></div>
@@ -870,6 +871,19 @@ SCH.tap=function(bx,by){const r=SCH.abox;if(r&&bx>r[0]&&bx<r[0]+34&&by>r[1]&&by<
 // TEMPLE
 // ======================================================================
 const TP={open:false,slots:[0,0,0,0].map(()=>({on:false,c:0})),stock:0,q:[],spawn:2,fled:0,truckDX:0,karaAt:-99,reveal:0,trick:40,bowlT:6,dogs:[mkDog('c',3,5)],msgT:0};
+// Keep rendering and pointer input on the same camera.
+TP.focused=false;
+TP.camera=()=>TP.focused?{scale:1.5,x:205,y:151}:{scale:1,x:W/2,y:H/2};
+TP.toWorld=(x,y)=>{const c=TP.camera();return [(x-W/2)/c.scale+c.x,(y-H/2)/c.scale+c.y];};
+function setTempleView(focused){
+ TP.focused=TP.open&&focused;
+ const button=$('bTempleView');button.hidden=!TP.open;
+ button.textContent=TP.focused?'返回廟口全景':'切換擺攤近景';
+ button.setAttribute('aria-pressed',String(TP.focused));
+ if(cur==='temple'){
+  $('sceneCaption').textContent=TP.focused?'香腸攤近景 · 點烤架放香腸或收起，招呼第一位客人':sceneInfo.temple.caption;
+ }
+}
 const TRUCK={x:6.6,y:2.6,w:2.2,d:1.8};
 const SPOTS=[[6.2,5.0],[5.5,5.8],[4.8,6.6],[4.1,7.3],[3.4,7.8]];
 TP.blocked=(x,y)=>x<0||y<0||x>=GW||y>=GH||(x>=6&&x<=8&&y>=2&&y<=4)||(x===4&&y===2)||(x===0&&y>=3&&y<=7)||(y===0);
@@ -942,6 +956,7 @@ function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;poly(c,[P
 const burnAt=()=>S.inv.flipper?1.7:1.25;
 function sCol(v){if(v<.5)return '#e7899a';if(v<.85)return '#c8664a';if(v<burnAt())return '#a8452c';return '#3a2a24';}
 TP.draw=function(ph){
+  const camera=TP.camera();g.save();g.translate(W/2,H/2);g.scale(camera.scale,camera.scale);g.translate(-camera.x,-camera.y);
   g.drawImage(cached('temple'+ph,c=>templeRoom(c,ph)),0,0);
   const lp=lanternsDraw(g,ph);bowlDraw(g);
   const list=[];
@@ -968,6 +983,7 @@ TP.draw=function(ph){
   {const q=P(4.5,2.5,14);gl.push([q[0],q[1],24,'rgba(255,170,90,A)',ph==='night'?.25:.08]);}
   {const q=P(.95,6.2,18);gl.push([q[0],q[1],30,'rgba(255,170,90,A)',ph==='night'?.3:.1]);}
   lighting(ph,gl);
+  g.restore();
 };
 function tpSay(who,s){$('mTemple').innerHTML=who?'<b>'+who+'</b>：'+s:s;TP.msgT=6;}
 function aSay(s,icon){tpSay('阿柴',s);if(icon){TP.aIcon=icon;TP.aIconT=2;}}
@@ -1018,14 +1034,22 @@ function hit(){const f=front();if(!TP.open||TP.fled>0)return;if(!f){aSay('香腸
 function flee(){if(!TP.open||TP.fled>0)return;TP.fled=S.inv.turbo?3:5;const cop=TP.q.some(p=>p.kind==='police'&&p.state!=='leave');TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});
   aSay(cop?'小獵犬號一溜煙開走，躲過警察！快～點～開！':'快閃了，可是客人也都散了。怎麼沒有警察？','excl');}
 function kara(){if(T-TP.karaAt<40)return;TP.karaAt=T;TP.reveal=8;setIcon(TP.dogs[0],'spark',3);tpSay('','卡拉發動！二柴和小柴的感應傳過來，柴犬獵人身邊浮出紅框。');}
-function toggleOpen(){TP.open=!TP.open;if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,3);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
+function toggleOpen(){TP.open=!TP.open;setTempleView(TP.open);if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,3);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
   else{TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});aSay('收攤了。今天賣了 '+S.soldToday+' 條，那沒什麼。');}syncTemple();save();}
 function collectBowl(){if(S.bowl<=0){tpSay('','碗裡空空的。開店的時候，來拜拜的人會順手丟零錢。');return;}const v=S.bowl;S.money+=v;S.bowl=0;aSay('碗裡有 '+v+' 元，收起來！','coin');save();}
 function bbq(){if(S.money<200){aSay('還差 '+(200-S.money)+' 元……快～點～賺錢！','anger');return;}S.money-=200;S.bbq++;const n=8+Math.floor(Math.random()*10);
   aSay('去隔壁燒肉吃到飽，吃了 '+n+' 盤還說：「再來一盤！」','heart');save();}
 function grillTap(i){if(!TP.open){tpSay('','先按「開店」再烤香腸。');return;}const s=TP.slots[i];
   if(!s.on){if(S.raw<=0){aSay('沒有生香腸了！去商店街的肉舖買。快～點～！','anger');return;}S.raw--;s.on=true;s.c=0;}else if(s.c>=burnAt()){s.on=false;aSay('烤焦了！怎麼那麼慢！','anger');}else if(s.c>=.85){s.on=false;TP.stock++;}else tpSay('','還沒熟，再等一下。');syncTemple();}
-TP.tap=function(bx,by){const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-b[1])<6){collectBowl();return;}
+TP.tap=function(bx,by){
+  [bx,by]=TP.toWorld(bx,by);
+  // The four visible sausages remain clickable in either view.
+  if(TP.open&&TP.fled<=0){
+   const picks=TP.slots.map((_,i)=>{const p=P(TRUCK.x+TP.truckDX+.5+i*.33,TRUCK.y+.7,28);return {i,dx:bx-p[0],dy:by-p[1]};})
+    .filter(p=>Math.abs(p.dx)<=4&&Math.abs(p.dy)<=4).sort((a,b)=>a.dx*a.dx+a.dy*a.dy-b.dx*b.dx-b.dy*b.dy);
+   if(picks.length){grillTap(picks[0].i);return;}
+  }
+  const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-b[1])<6){collectBowl();return;}
   const d=TP.dogs[0],dp=P(d.x+.5,d.y+.5);if(Math.abs(bx-dp[0])<12&&by>dp[1]-22&&by<dp[1]+3){setIcon(d,'star',2);tpSay('小柴','塔搭！');return;}
   const w=TP.winPos;if(w&&Math.abs(bx-w[0])<16&&by>w[1]-16&&by<w[1]+2){aSay(pick(['快～點～買香腸！','那沒什麼，我烤的最好吃。','今天也要賺錢去吃燒肉。']),'note');return;}
   const s=P(.95,6.2,16);if(Math.abs(bx-s[0])<16&&Math.abs(by-s[1])<16){bbq();return;}
@@ -1035,7 +1059,7 @@ function syncTemple(){const st=$('grills');
   if(!st.children.length){st.innerHTML=[0,1,2,3].map(i=>'<button class="grill" data-g="'+i+'"><i></i><span></span></button>').join('');st.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>grillTap(+b.dataset.g));}
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'好了！':'焦了';});
   $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
-  $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
+  $('bOpen').textContent=TP.open?'收攤':'開店擺攤';$('bOpen').className='btn '+(TP.open?'ghost':'good');
   const kl=Math.max(0,40-(T-TP.karaAt));$('bKara').disabled=kl>0||!TP.open;$('karaS').textContent=kl>0?'冷卻 '+Math.ceil(kl)+' 秒':'看穿獵人';
   ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bBBQ').disabled=S.money<200;
   if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'這裡是廟口。阿柴的小獵犬號停在廟前，按「開店」開始賣香腸。';}
@@ -1551,11 +1575,12 @@ function showScene(s){
   doorLabel.style.left=p[0]/W*100+'%';doorLabel.style.top=p[1]/H*100+'%';
  }
  if(s==='school'){if(!SCH.class)schSay('t',phase()==='night'?'晚上學校沒開，明天早上再來吧。':'阿柴，準備好就可以上課了。');renderQ();syncSchoolBtns();}
- if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple')syncTemple();if(s==='shop'){SPS.sig='';SPS.sync();}
+ if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple'){setTempleView(TP.focused);syncTemple();}if(s==='shop'){SPS.sig='';SPS.sync();}
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showScene(b.dataset.s));
 document.querySelectorAll('[data-travel]').forEach(b=>b.onclick=()=>showScene(b.dataset.travel));
 const chips=$('chips');[['a','阿柴','急性子・愛吃'],['b','二柴','發明家'],['c','小柴','魔術師']].forEach(([id,n,t],i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=n+'<small>'+t+'</small>';b.onclick=()=>selectDog(i);chips.appendChild(b);});
+$('bTempleView').onclick=()=>setTempleView(!TP.focused);
 $('bLamp').onclick=()=>{toggleLamp();$('mLab').textContent=S.lamp?'立燈打開了。':'立燈關掉了。';};
 $('bSleep').onclick=()=>{if(phase()!=='night')return;cancelJourney();S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
 $('bClass').onclick=startClass;$('bWake').onclick=wake;
