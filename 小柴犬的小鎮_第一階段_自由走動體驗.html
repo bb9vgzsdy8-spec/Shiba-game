@@ -543,11 +543,33 @@ function wallVine(c,side,u,z,length){
   for(let i=0;i<length;i++){const q=at(u+Math.sin(i*1.3)*.12,z-i*3);lineP(c,previous,q,'#718669');
     ellPx(c,q[0]+(i%2?2:-2),q[1],3,1.5,i%3?'#8ea37b':'#b2bf8f');previous=q;}
 }
+// Material accents use the existing projection and footprints, so paths stay clear.
+function materialGrain(c,project,x,y,w,d,z,seed=0){
+ for(let i=0;i<9;i++){
+  const u=x+.08+hash(seed+i*7)*Math.max(.01,w-.2),v=y+.08+hash(seed+i*13+1)*Math.max(.01,d-.2);
+  lineP(c,project(u,v,z),project(Math.min(x+w-.05,u+.12+hash(i+seed)*.2),v,z),i%3?'#b38b65':'#ecd0a0');
+ }
+}
+function glassJar(c,x,y,z,col){
+ const q=P(x,y,z);ellPx(c,q[0]+1,q[1],3,1,'rgba(48,39,32,.25)');
+ rect(c,q[0]-2,q[1]-7,5,7,shade(col,.8));rect(c,q[0]-1,q[1]-7,3,6,col);
+ rect(c,q[0]-2,q[1]-9,5,2,'#dac19a');rect(c,q[0]-1,q[1]-4,3,2,'#efe2bd');px(c,q[0]-1,q[1]-6,'#fff1d0');
+}
+function wovenCrate(c,x,y,z,col){
+ box(c,x,y,.65,.55,z,6,'#e0bc84',col,shade(col,.78));
+ for(let i=1;i<4;i++)lineP(c,P(x+i*.15,y+.55,z+1),P(x+i*.15,y+.55,z+5),'#edcf9c');
+ for(let i=0;i<3;i++){const q=P(x+.13+i*.19,y+.3,z+6);ellPx(c,q[0],q[1]-2,2,2,i%2?'#b66f54':'#ddb075');px(c,q[0],q[1]-4,'#749073');}
+}
 function labDetails(c){
   // Linen curtain edges and a tiny plant on the existing window sill.
   quad(c,0,3.02,0,3.25,26,56,'x','#eee0bd');quad(c,0,4.75,0,4.98,26,56,'x','#eee0bd');
   quad(c,0,3.09,0,3.13,27,55,'x','#cdbd9c');quad(c,0,4.85,0,4.89,27,55,'x','#cdbd9c');
   smallPlant(c,.22,4.55,24,false);wallVine(c,'x',.6,65,7);wallVine(c,'y',8.6,66,6);
+  // Bottles, labels and notes on high shelves add detail above the walking area.
+  box(c,6.9,0,1.3,.24,60,2,'#b99063','#98734f','#805e43');
+  for(let i=0;i<4;i++)glassJar(c,7.02+i*.29,.1,62,['#80a6a0','#bc8a79','#afad72','#8a9fae'][i]);
+  quad(c,3.2,0,4.05,0,51,62,'y','#ddc59d');
+  for(let j=0;j<3;j++)lineP(c,P(3.32,0,59-j*2),P(3.85,0,59-j*2),'#9f977d');
   // Stitches along the existing rug, without changing its footprint.
   for(let u=2.8;u<6.3;u+=.18)lineP(c,P(u,5.8),P(u,5.95),'#e6d0aa');
   const q=P(4.5,4.4);ellPx(c,q[0],q[1],4,2,'#cbd0ab');
@@ -564,6 +586,11 @@ function schoolDetails(c,ph){
   for(let u=.5;u<9.8;u+=.65){const a=P(u,0,65),b=P(u+.6,0,65),tip=P(u+.3,0,60);
     lineP(c,a,b,'#ab8c67');poly(c,[a,b,tip],['#a9bb97','#dfb29a','#b7cacc'][Math.floor(u*2)%3]);}
   wallVine(c,'x',7.4,63,6);
+  // Chalk, eraser and a hanging timetable stay on the board and wall.
+  for(let i=0;i<4;i++){const q=P(.16,2.1+i*.22,24);rect(c,q[0],q[1]-1,3,1,['#e8e0bd','#d7b39f','#a9c2b5','#e8e0bd'][i]);}
+  box(c,.02,6.05,.2,.35,24,3,'#ab956d','#8b8065','#746e59');
+  quad(c,8.25,0,8.95,0,30,45,'y','#f0dfbb');
+  for(let j=0;j<4;j++)lineP(c,P(8.35,0,42-j*3),P(8.8,0,42-j*3),j%2?'#a2b3a1':'#bd927a');
 }
 function templeDetails(c){
   // Moss occupies paving seams; decorations stay against the existing walls.
@@ -576,6 +603,9 @@ function templeDetails(c){
     const q=P(x+.32,0,31);pattern(c,['.x.','xxx','.x.','...','xxx','.x.','xxx'],q[0]-1,q[1],{x:'#b7745e'});
     lineP(c,P(x,0,11),P(x+.65,0,11),'#c7a16b');
   }
+  // Weathered roof seams and brass door fittings.
+  for(let u=.1;u<9.8;u+=.35){const a=P(u,0,61);px(c,a[0],a[1],'#edc997');}
+  for(const x of [4.55,5.45]){const q=P(x,0,20);ellPx(c,q[0],q[1],2,3,'#d7b572');px(c,q[0],q[1]-1,'#f2dba4');}
   wallVine(c,'x',1.4,28,5);wallVine(c,'x',7.6,28,7);
 }
 function shopDetails(c){
@@ -583,6 +613,14 @@ function shopDetails(c){
   for(const x of [.5,3.7,6.9]){
     box(c,x,0,.9,.3,43,3,'#c6a078','#ad835e','#987757');
     for(let i=0;i<3;i++)smallPlant(c,x+.15+i*.28,.2,46,i!==1);
+  }
+  // Goods stay inside the existing shop fronts, away from the street.
+  for(const base of [.5,3.75,7.0]){
+   for(let level=0;level<2;level++){
+    const z=8+level*12;box(c,base,.12,1.25,.32,z,2,'#c3a375','#a98b65','#917354');
+    for(let i=0;i<4;i++)glassJar(c,base+.12+i*.29,.28,z+2,['#bf8976','#8da69b','#d0af76','#9a8faa'][(i+level)%4]);
+   }
+   wovenCrate(c,base+.3,.2,0,'#ac8961');
   }
   wallVine(c,'x',5.05,63,9);wallVine(c,'x',7.7,63,8);
   for(let v=5.4;v<7.4;v+=.6){const q=P(0,v,9);pattern(c,['.pp.','pppp','.pp.','..g.','.gg.'],q[0],q[1],{p:'#c6a393',g:'#9aa785'});}
@@ -659,6 +697,49 @@ const LABDRAW={
     ellPx(c,q[0]-4+sw,q[1]-6,4,2.5,leaf);ellPx(c,q[0]+4+sw,q[1]-8,4,2.5,leaf);ellPx(c,q[0]+sw,q[1]-13,3,4,dk);line(c,q[0],q[1],q[0]+sw,q[1]-12,'#447a38');},
   cushion(c){const q=P(8,5,2);ellPx(c,q[0],q[1]+1,26,12,'#9d796e');ellPx(c,q[0],q[1],25,11.5,'#c49a8a');ellPx(c,q[0],q[1]-1,19,8,'#dbb5a0');ellPx(c,q[0]-4,q[1]-3,8,3,'#edcfb1');},
 };
+// Dress each existing prop after its base drawing, preserving depth order.
+for(const id of ['shelf','fridge','bench','crates','machine','books','bucket','cushion']){
+ const base=LABDRAW[id];LABDRAW[id]=function(c){base(c);
+  if(id==='shelf'){
+   for(const z of [3,17,31]){
+    for(let i=0;i<9;i++){
+     const x=1.12+i*.31,q=P(x,.64,z),h=5+(i%3)*2;
+     if(i%3===0){glassJar(c,x,.64,z,['#bc8f77','#83a59c','#a795b1'][Math.floor(i/3)]);}
+     else{rect(c,q[0]-1,q[1]-h,3,h,['#c19571','#85a19b','#bb8374','#a5ad83'][i%4]);
+      rect(c,q[0]-1,q[1]-h+1,3,1,'#e6c99d');px(c,q[0],q[1]-2,'#eadbc1');}
+    }
+    lineP(c,P(1,.66,z-1),P(4,.66,z-1),'#dfb788');
+   }
+  }else if(id==='fridge'){
+   for(const z of [4,27]){
+    quad(c,.08,1.96,.8,1.96,z,z+14,'y','#91a69a');
+    lineP(c,P(.12,1.97,z+13),P(.77,1.97,z+13),'#b9c7ae');
+   }
+   for(const z of [8,11,14])lineP(c,P(.14,1.97,z),P(.65,1.97,z),'#6f887f');
+   box(c,.13,1.14,.5,.45,44,3,'#b89976','#a38260','#836d53');
+   smallPlant(c,.4,1.4,47,false);
+  }else if(id==='bench'){
+   materialGrain(c,P,5,0,3,.95,17,3);
+   for(let i=0;i<3;i++){
+    const x=5.1+i*.95;quad(c,x,.94,x+.8,.94,7,12,'y','#ac865e');
+    lineP(c,P(x+.05,.95,11),P(x+.75,.95,11),'#dab184');
+    const q=P(x+.4,.96,9);rect(c,q[0]-1,q[1],3,1,'#6f6555');
+   }
+  }else if(id==='crates'){
+   for(const y of [6,7]){
+    lineP(c,P(.08,y+.96,2),P(.86,y+.96,12),'#97714c');
+    lineP(c,P(.08,y+.96,3),P(.86,y+.96,13),'#e2bf8b');
+    materialGrain(c,P,.08,y+.08,.8,.8,14,y*3);
+   }
+  }else if(id==='machine'){
+   const q=P(5.5,7.87,8);ellPx(c,q[0],q[1]-2,3,3,'#d2c6a6');
+   ellPx(c,q[0],q[1]-2,2,2,'#4a625e');line(c,q[0],q[1]-2,q[0]+1,q[1]-4,'#edbd85');
+   for(let i=0;i<3;i++){const a=P(5.25+i*.16,7.86,2);px(c,a[0],a[1],'#c2baaa');}
+  }else if(id==='cushion'){
+   for(let i=0;i<16;i++){const a=i*Math.PI/8,q=P(8,5,2);px(c,q[0]+Math.cos(a)*22,q[1]+Math.sin(a)*10,'#efd0ae');}
+  }
+ };
+}
 function bulbsDraw(c){const bulbs=[];for(let u=.4;u<GW;u+=.6)bulbs.push(P(u,0,63-Math.abs(Math.sin(u*Math.PI/1.8))*4));const nb=bulbs.length;for(let v=.6;v<GH;v+=.6)bulbs.push(P(0,v,63-Math.abs(Math.sin(v*Math.PI/1.8))*4));
   for(let i=0;i<bulbs.length-1;i++){if(i===nb-1)continue;lineP(c,bulbs[i],bulbs[i+1],'#2e1f18');}const bc=['#ffd860','#ff8a6a','#8ad0ff','#a8f08a'];
   bulbs.forEach((b,i)=>rect(c,b[0]-1,b[1]+1,2,2,bc[i%4]));return bulbs;}
@@ -801,7 +882,11 @@ function schoolRoom(c,ph){
 function chalk(c){if(!SCH.class||!SCH.class.q)return;const n=(SCH.class.qi*7+3)%5;for(let i=0;i<3+n%2;i++){const a=P(0,2.2+i*.55,40),b=P(0,2.6+i*.55,32);lineP(c,a,b,'#ffffff');}
   const a=P(0,4.6,38);ellPx(c,a[0],a[1],4,4,'#f3d06b');px(c,a[0]-2,a[1]-5,'#f3d06b');px(c,a[0]+2,a[1]-5,'#f3d06b');}
 function deskDraw(c,x,y){box(c,x+.12,y+.18,.76,.64,10,3,'#dfbc88','#c69e6e','#b28b61');box(c,x+.15,y+.25,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');box(c,x+.15,y+.7,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');box(c,x+.78,y+.7,.08,.08,0,10,'#a0805a','#a0805a','#8f7051');
-  const q=P(x+.4,y+.5,13);rect(c,q[0]-2,q[1]-1,5,2,'#ffffff');}
+  materialGrain(c,P,x+.12,y+.18,.76,.64,13,x*9+y);
+  poly(c,[P(x+.25,y+.3,13.5),P(x+.58,y+.3,13.5),P(x+.58,y+.62,13.5),P(x+.25,y+.62,13.5)],'#f2e4c5');
+  lineP(c,P(x+.41,y+.32,14),P(x+.41,y+.6,14),'#c6b89b');
+  lineP(c,P(x+.64,y+.3,14),P(x+.7,y+.66,14),'#c98a64');
+  const q=P(x+.3,y+.51,14);px(c,q[0],q[1],'#90a5a2');}
 function chairDraw(c,x,y){box(c,x+.25,y+.25,.5,.5,0,7,'#9baa8e','#8b9e80','#7d9274');box(c,x+.7,y+.25,.08,.5,7,10,'#9baa8e','#8b9e80','#7d9274');}
 SCH.draw=function(ph){
   g.drawImage(cached('school'+ph,c=>schoolRoom(c,ph)),0,0);chalk(g);
@@ -941,16 +1026,28 @@ function truckDraw(c){
   box(c,x+w,y+.25,.55,1.1,8,16,'#a86a3a','#9a6235','#8a552c');
   {const f=P(x+w+.55,y+.8,12);ellPx(c,f[0],f[1],5,4,'#f7f0e4');rect(c,f[0]+1,f[1]-3,3,2,'#1d1714');const e=P(x+w+.55,y+.55,18);rect(c,e[0],e[1],2,2,'#1d1714');
     const ear=P(x+w+.3,y+1.3,22);poly(c,[[ear[0],ear[1]],[ear[0]+5,ear[1]+1],[ear[0]+4,ear[1]+12],[ear[0]-1,ear[1]+9]],'#5d3a1f');}
+  // Rivets, timber trim and a striped awning give the cart a crafted finish.
+  for(let u=.15;u<w;u+=.32){const q=P(x+u,y+d,7);px(c,q[0],q[1],'#a4927c');px(c,q[0],q[1]-1,'#fff2d3');}
+  for(let z=6;z<22;z+=4)lineP(c,P(x+w,y+.35,z),P(x+w,y+1.3,z),'#d0c2aa');
+  box(c,x+.05,y+d-.03,1.35,.2,22,2,'#c69b6d','#a47b55','#8e6749');
+  for(let u=0;u<1.3;u+=.2)poly(c,[P(x+.05+u,y+d-.03,24),P(x+.24+u,y+d-.03,24),P(x+.24+u,y+d+.18,22),P(x+.05+u,y+d+.18,22)],Math.round(u*5)%2?'#e9dcc1':'#b77a62');
   // grill on top
   box(c,x+.3,y+.25,1.5,.9,26,2,'#3a3330','#2a2420','#22201c');
-  TP.slots.forEach((s,i)=>{const q=P(x+.5+i*.33,y+.7,28);if(s.on){const col=sCol(s.c);rect(c,q[0]-3,q[1]-1,6,2,col);if(s.c>burnAt()){c.globalAlpha=.5;ellPx(c,q[0],q[1]-5-Math.sin(T*4)*2,2,2,'#555');c.globalAlpha=1;}}});
+  for(let u=.34;u<1.75;u+=.12)lineP(c,P(x+u,y+.3,28),P(x+u,y+1.08,28),'#747570');
+  lineP(c,P(x+.3,y+.25,28),P(x+1.8,y+.25,28),'#c6c2af');
+  TP.slots.forEach((s,i)=>{const q=P(x+.5+i*.33,y+.7,28);if(s.on){const col=sCol(s.c);rect(c,q[0]-3,q[1]-1,6,2,col);px(c,q[0]-2,q[1]-1,shade(col,1.3));if(s.c>.5&&s.c<burnAt()){px(c,q[0],q[1],'#713e30');px(c,q[0]+2,q[1],'#713e30');}if(s.c>burnAt()){c.globalAlpha=.5;ellPx(c,q[0],q[1]-5-Math.sin(T*4)*2,2,2,'#555');c.globalAlpha=1;}}});
   if(TP.open)for(let i=0;i<3;i++){const s=(T*.7+i*.33)%1,q=P(x+1,y+.6,30);c.globalAlpha=.4*(1-s);ellPx(c,q[0]+Math.sin(T*2+i)*3,q[1]-s*20,2+s*2,1.5+s,'#f0ece6');}c.globalAlpha=1;
   // sign
   if(S.inv.sign){const q=P(x+w*.3,y+d,38);rect(c,q[0]-1,q[1]-9,20,10,'#2b211c');const on=Math.floor(T*2)%4!==0;glyphs(c,q[0]+2,q[1]-7,2,on?'#ff7ab8':'#7a3a5a');}
   // flag
   {const q=P(x+w*.9,y+d,26);line(c,q[0],q[1],q[0],q[1]-16,'#5a5e66');rect(c,q[0]+1,q[1]-16,7,5,'#bd806b');}
 }
-function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;poly(c,[P(x+.05,y+d+.18,12),P(x+1.4,y+d+.18,12),P(x+1.4,y+d,10),P(x+.05,y+d,10)],'#bd806b');
+function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;
+  // Napkin box, sauce bottles and a timber serving ledge travel with the truck.
+  box(c,x+.12,y+d,.35,.28,12,4,'#d1b18c','#b48e69','#967351');
+  {const q=P(x+.27,y+d+.15,16);rect(c,q[0]-2,q[1]-3,4,3,'#f3e7cc');px(c,q[0],q[1]-4,'#f3e7cc');}
+  for(let i=0;i<2;i++){const q=P(x+1.1+i*.22,y+d+.08,12);rect(c,q[0]-1,q[1]-6,3,6,i?'#c8a366':'#b96f58');rect(c,q[0],q[1]-8,1,2,'#ead8b0');}
+poly(c,[P(x+.05,y+d+.18,12),P(x+1.4,y+d+.18,12),P(x+1.4,y+d,10),P(x+.05,y+d,10)],'#bd806b');
   for(let i=0;i<4;i++){const q=P(x+.25+i*.32,y+d,22);rect(c,q[0]-3,q[1]-1,6,3,i%2?'#f6ead2':'#bd806b');}
   if(TP.stock>0){const q=P(x+.4,y+d+.15,12);for(let i=0;i<Math.min(4,TP.stock);i++)rect(c,q[0]+i*4,q[1]-2,3,2,'#a8452c');}}
 const burnAt=()=>S.inv.flipper?1.7:1.25;
@@ -1349,11 +1446,21 @@ const HOME=(()=>{
   const paw=iso(4,4.15);ellPx(c,paw[0],paw[1],4,2,'#cfd0ad');
   for(const [x,y] of [[-4,-3],[0,-4],[4,-3]])ellPx(c,paw[0]+x,paw[1]+y,1,1,'#cfd0ad');
   if(ph!=='night')surface(c,[iso(.3,1.4),iso(.3,3.3),iso(3.5,5.4),iso(3.5,3.5)],'rgba(255,235,176,.16)');
+  // Two wall shelves hold jars, stacked books and a trailing plant.
+  cube(c,4.4,0,1.15,.28,31,2,'#b38a60');
+  for(let i=0;i<4;i++){
+   const q=iso(4.52+i*.25,.14,33);rect(c,q[0]-1,q[1]-6-i%2,3,6+i%2,['#b78071','#8daba1','#d0b07b','#9e95aa'][i]);
+   rect(c,q[0]-1,q[1]-7-i%2,3,1,'#e1caa0');px(c,q[0],q[1]-4,'#eee0bb');
+  }
+  for(let i=0;i<3;i++)cube(c,2.55+i*.03,.12,.55,.34,37+i*2,2,['#b78370','#d4b584','#87a39a'][i]);
+  for(let u=.3;u<7;u+=.2){const q=iso(0,u,3);px(c,q[0],q[1],'#b8956b');}
   drawExit(c,iso,EXITS.home);
  }
  const backgrounds={};
  function furniture(c,o){
   const {x,y,w,h}=o;
+  // Contact shadows are drawn with their furniture, before the solid surfaces.
+  surface(c,[iso(x+.1,y+.2),iso(x+w+.12,y+.2),iso(x+w+.12,y+h+.13),iso(x+.1,y+h+.13)],'rgba(63,47,34,.16)');
   if(o.id==='sofa'){
    cube(c,x+.12,y+.15,w-.24,h-.3,0,4,'#976e4c');
    cube(c,x,y,w,.35,4,19,'#829582');
@@ -1361,6 +1468,15 @@ const HOME=(()=>{
    for(let i=0;i<2;i++){cube(c,x+.22+i*.82,y+.48,.75,1.2,12,2,'#b2bfa0');cube(c,x+.3+i*.8,y+.42,.62,.36,14,5,i?'#d7b392':'#e0d4ad');}
    cube(c,x,y+.25,.22,h-.25,4,12,'#8fa18a');cube(c,x+w-.22,y+.25,.22,h-.25,4,12,'#8fa18a');
    tile(c,x+.3,y+1.1,.5,.8,14.5,'#d6b392');for(let k=0;k<3;k++)lineP(c,iso(x+.35+k*.14,y+1.1,15),iso(x+.35+k*.14,y+1.9,15),'#f0d2aa');
+   // Woven upholstery: cushion seams, buttons, piping and a knitted throw.
+   for(let i=0;i<2;i++){
+    const u=x+.23+i*.82;
+    lineP(c,iso(u,y+.52,14.5),iso(u+.7,y+.52,14.5),'#d0d0ac');
+    lineP(c,iso(u+.7,y+.52,14.5),iso(u+.7,y+1.63,14.5),'#7f927b');
+    for(let j=0;j<3;j++){const q=iso(u+.18+j*.2,y+.85,14.5);px(c,q[0],q[1],'#8e9e85');}
+   }
+   for(let j=0;j<7;j++)lineP(c,iso(x+.33+j*.065,y+1.12,15),iso(x+.33+j*.065,y+1.85,15),'#edd0aa');
+   for(let j=0;j<4;j++)lineP(c,iso(x+.32,y+1.18+j*.17,15),iso(x+.78,y+1.18+j*.17,15),'#b78c72');
   }else if(o.id==='shelf'){
    cube(c,x+.1,y+.1,w-.2,h-.2,0,35,'#b4895c');
    // The front face uses actual isometric coordinates, so books sit on their shelves.
@@ -1374,18 +1490,35 @@ const HOME=(()=>{
     }
     lineP(c,iso(x+.15,y+h,z-1),iso(x+w-.15,y+h,z-1),'#d9b27e');
    }
+   for(let row=0;row<3;row++)for(let i=0;i<6;i++){
+    const u=x+.25+i*.25,z=4+row*10;
+    lineP(c,iso(u+.035,y+h-.13,z+1),iso(u+.035,y+h-.13,z+4+(i+row)%3),'#ead8b2');
+    const q=iso(u+.08,y+h-.14,z+3);px(c,q[0],q[1],'#75644e');
+   }
+   materialGrain(c,iso,x+.1,y+.1,w-.2,h-.2,35,7);
    pot(c,x+.45,y+.65,35,true);cube(c,x+1.1,y+.3,.5,.5,35,3,'#d5b782');
   }else if(o.id==='bed'){
    cube(c,x+.1,y+.1,w-.2,h-.2,0,4,'#ae7e64');tile(c,x+.18,y+.15,w-.36,h-.3,4.5,'#c9907f','#e9c4a4');
    cube(c,x+.2,y+.2,.48,.58,4,3,'#ebd8b8');tile(c,x+.85,y+.2,.85,.6,5,'#dab09a');
    for(let i=0;i<4;i++)lineP(c,iso(x+.93+i*.17,y+.25,5.5),iso(x+.93+i*.17,y+.73,5.5),'#f0d2b0');
+   // Stitched hem and a small paw embroidered on the sleeping pad.
+   for(let u=x+.24;u<x+w-.2;u+=.14){const q=iso(u,y+h-.17,5);px(c,q[0],q[1],'#f2d3b0');}
+   const paw=iso(x+1.2,y+.5,5.5);ellPx(c,paw[0],paw[1],2,1,'#b47d70');
+   for(const dx of [-2,0,2])px(c,paw[0]+dx,paw[1]-2,'#b47d70');
   }else if(o.id==='table'){
    for(const [dx,dy] of [[.12,.12],[1.7,.12],[.12,.72],[1.7,.72]])cube(c,x+dx,y+dy,.14,.14,0,12,'#92684b');
    cube(c,x,y,w,h,12,3,'#d3ac77');tile(c,x+.75,y+.02,.48,.96,15.2,'#e8d6b2');
+   materialGrain(c,iso,x,y,w,h,15.1,13);
+   for(let u=x+.79;u<x+1.2;u+=.09)lineP(c,iso(u,y+.05,15.5),iso(u,y+.95,15.5),'#d1bb99');
    const p=iso(x+.48,y+.5,16);ellPx(c,p[0],p[1],6,3,'#f3e5c5');ellPx(c,p[0]-1,p[1]-1,3,2,'#bd8550');rect(c,p[0]-2,p[1]-2,2,1,'#e4b46b');
    const cup=iso(x+1.45,y+.45,16);rect(c,cup[0]-2,cup[1]-5,5,5,'#7f9c8e');rect(c,cup[0]+3,cup[1]-4,2,3,'#adc0a5');rect(c,cup[0]-1,cup[1]-5,3,1,'#665044');
    for(let i=0;i<2;i++){const t=(T*.35+i*.5)%1;c.globalAlpha=.45*(1-t);px(c,cup[0]+Math.round(Math.sin(t*5+i)),cup[1]-7-t*7,'#fff2d5');}c.globalAlpha=1;
-  }else if(o.id==='plant'){pot(c,x+.5,y+.5,0,false);}
+   const book=iso(x+1.12,y+.7,16);rect(c,book[0]-3,book[1]-3,6,3,'#82968b');rect(c,book[0]-2,book[1]-2,5,1,'#e7d9b9');
+  }else if(o.id==='plant'){
+   pot(c,x+.5,y+.5,0,false);
+   const q=iso(x+.5,y+.5);ellPx(c,q[0],q[1]-7,4,1,'#694e3a');
+   for(let i=0;i<4;i++)px(c,q[0]-2+i*2,q[1]-7+(i%2),'#a38d61');
+  }
   else if(o.id==='lamp'){
    const p=iso(x+.5,y+.5);ellPx(c,p[0],p[1],5,2,'#9a7855');line(c,p[0],p[1]-1,p[0],p[1]-25,'#846747');
    surface(c,[[p[0]-7,p[1]-23],[p[0]+7,p[1]-23],[p[0]+4,p[1]-33],[p[0]-4,p[1]-33]],'#efd4a2','#ad8a60');rect(c,p[0]-5,p[1]-24,10,1,'#fff0c2');
@@ -1605,3 +1738,4 @@ showScene('home');requestAnimationFrame(frame);
 </script>
 </body>
 </html>
+
