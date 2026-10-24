@@ -159,6 +159,66 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
  .door-label{padding:5px 7px;font-size:14px}
 }
 
+/* Viewport layout: keep the scene and its controls side by side on laptops. */
+*{box-sizing:border-box}
+body{margin:0;padding:10px max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px))}
+.app{max-width:1440px;gap:8px}
+header{flex-wrap:nowrap;min-height:38px}
+.brand-mark{width:34px;height:34px;border-radius:10px;font-size:20px;flex:none}
+h1{font-size:20px;letter-spacing:.02em}.tagline,.location-label{display:none}
+.hud{font-size:14px}.hud span{padding:5px 9px;box-shadow:none}
+.travel-tools{padding:0;min-height:44px}#sceneName{font-size:18px}
+.travel-map{gap:6px;padding:8px}.map-hint{display:none}
+.map-place{min-height:48px;flex-direction:row;justify-content:center;padding:6px;gap:6px}
+.map-place small{display:none}.map-icon{font-size:20px}
+.tabs{padding:3px;gap:4px}.tab{padding:6px 4px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;min-height:0}
+.play-area{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.stage{width:100%;flex:none;border-width:3px;border-radius:14px}
+.stage-screen{box-sizing:content-box}
+.stage-caption{padding:6px 8px;font-size:15px;line-height:1.4}
+.travel-status{width:100%;text-align:center;line-height:1.4;min-height:2.8em}
+.controls{min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
+.panel{min-height:0;padding:10px;gap:8px;box-shadow:none}
+.panel>*{flex-shrink:0}.panel .inv{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 4px 4px 0}
+.msg{margin:0;padding:8px;min-height:0;font-size:15px;line-height:1.5}
+.btn{padding:8px 5px}.chip{padding:5px 3px}.row>.btn{flex:1}
+.inv-item{padding-top:6px;gap:6px}.inv-item .btn{padding:6px 9px}
+.qbox{font-size:17px;padding:8px}.stats{gap:6px 10px}
+.instructions{font-size:14px;color:var(--muted)}
+summary{cursor:pointer;min-height:32px;padding:6px 2px;font-size:14px;line-height:20px}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.instructions .hint{margin:4px 0 0;padding:8px;max-height:110px;overflow:auto}
+.daily-card{display:block;flex:none;padding:4px 10px;border-radius:12px}
+.daily-content{display:flex;flex-direction:column;gap:8px;padding:4px 0 6px}
+.daily-head{display:none}.daily-goals{grid-template-columns:1fr;gap:4px}.goal-line{padding:5px}
+@media(min-width:900px) and (min-height:600px){
+ .app{height:calc(100vh - 20px);height:calc(100dvh - 20px)}
+ .app>header,.app>.travel-tools,.app>.travel-map,.app>.tabs{flex-shrink:0}
+ .workspace{flex:1;overflow:visible}
+ .controls>.panel{flex:1}
+ /* The fixed caption and status budget leaves the complete 320:236 canvas visible. */
+ .stage{max-width:calc((100vh - 248px) * 320 / 236);max-width:calc((100dvh - 248px) * 320 / 236)}
+ .travel-map:not([hidden]) ~ .workspace .stage{max-width:calc((100vh - 326px) * 320 / 236);max-width:calc((100dvh - 326px) * 320 / 236)}
+ .controls{overflow:auto;overscroll-behavior:contain;padding:2px 4px 4px 0}
+}
+@media(min-width:900px) and (max-height:740px){
+ .workspace{grid-template-columns:minmax(0,1fr) 380px;gap:10px}
+ .panel{gap:6px;padding:8px}.msg{font-size:14px;padding:6px}
+ .chip small{font-size:14px}.grill{padding:5px 2px}
+ .daily-card{padding:2px 8px}
+}
+@media(max-width:899px),(max-height:599px){
+ .workspace{grid-template-columns:minmax(0,1fr)}
+ .play-area{max-width:640px;width:100%;margin:auto}
+ .controls{display:block}.panel,.daily-card{margin-bottom:8px}
+ .panel .inv{max-height:none;overflow:visible}
+ header{flex-wrap:wrap}.hud{gap:4px}
+ .travel-map{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .map-place{flex-direction:column;font-size:14px}.map-place:last-child{grid-column:auto}
+ .map-icon{font-size:18px}.travel-status{min-height:0}
+}
+
 </style>
 </head>
 <body>
@@ -179,19 +239,6 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <button type="button" class="map-place" data-travel="temple"><span class="map-icon" aria-hidden="true">🏮</span><strong>廟口</strong><small>香腸攤開張</small></button>
     <button type="button" class="map-place" data-travel="shop"><span class="map-icon" aria-hidden="true">🛍️</span><strong>商店街</strong><small>慢慢逛小店</small></button>
   </nav>
-  <div class="stage">
-    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
-    <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
-  </div>
-  <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
-  <section class="daily-card" aria-label="今日小目標">
-    <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
-    <div class="daily-goals">
-      <div class="goal-line"><span class="goal-dot">1</span><span>到信義國小完成一堂課</span><b id="goalClass">待完成</b></div>
-      <div class="goal-line"><span class="goal-dot">2</span><span>今天在廟口賣出 3 條香腸</span><b id="goalSell">0 / 3</b></div>
-    </div>
-    <button class="btn daily-claim" id="bDaily" disabled>完成兩項目標後領取獎勵</button>
-  </section>
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-s="home" aria-selected="true">柴犬的家</button>
     <button class="tab" role="tab" data-s="lab" aria-selected="false">研究室</button>
@@ -200,17 +247,26 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <button class="tab" role="tab" data-s="shop" aria-selected="false">商店街</button>
   </div>
 
+  <main class="workspace">
+    <div class="play-area">
+  <div class="stage">
+    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
+    <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
+  </div>
+  <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
+    </div>
+    <aside class="controls" aria-label="角色與場景操作">
   <section class="panel" id="p-home">
     <div class="msg" id="homeMsg">🏡 第一階段體驗：點擊地板讓柴犬走動，點擊家具會自動走近並互動。</div>
     <div class="row" id="homeDogs"><button class="btn ghost" data-dog="0">阿柴</button><button class="btn ghost" data-dog="1">二柴</button><button class="btn ghost" data-dog="2">小柴</button></div>
-    <p class="hint">這是第一階段可操作的等角像素地圖。家具可避障尋路；學校、廟口、商店街與原有存檔繼續保留在其他分頁。原本研究室也保留。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">這是第一階段可操作的等角像素地圖。家具可避障尋路；學校、廟口、商店街與原有存檔繼續保留在其他分頁。原本研究室也保留。</p></details>
   </section>
   <section class="panel" id="p-lab" hidden>
     <div class="row" id="chips"></div>
     <div class="msg" id="mLab"></div>
     <div class="g2"><button class="btn ghost" id="bLamp">關掉立燈</button><button class="btn violet" id="bSleep">睡到明天早上</button></div>
     <div class="inv" id="invList"></div>
-    <p class="hint">點地板讓選中的小柴犬走過去，點家具互動。二柴的發明會讓廟口的香腸攤更好做生意。上課拿到的獎狀會掛在研究室牆上。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點地板讓選中的小柴犬走過去，點家具互動。二柴的發明會讓廟口的香腸攤更好做生意。上課拿到的獎狀會掛在研究室牆上。</p></details>
   </section>
 
   <section class="panel" id="p-school" hidden>
@@ -220,14 +276,14 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
     <div class="g2" id="qAns"></div>
     <div class="g2"><button class="btn good" id="bClass">開始上課</button><button class="btn blue" id="bWake">叫醒阿柴</button></div>
     <div class="stats"><span>貼紙 <b id="sStars">0</b> 張</span><span>獎狀 <b id="sCert">0</b> 張</span><span>上過 <b id="sClasses">0</b> 堂課</span><span>燒肉便當 <b id="sBento">0</b> 個</span></div>
-    <p class="hint">一堂課五題。阿柴上課會打瞌睡，看到他睡著（頭上有 Z）要趕快叫醒，不然老師會點名。五題全對可以拿到一張獎狀。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">一堂課五題。阿柴上課會打瞌睡，看到他睡著（頭上有 Z）要趕快叫醒，不然老師會點名。五題全對可以拿到一張獎狀。</p></details>
   </section>
 
   <section class="panel" id="p-shop" hidden>
     <div class="msg" id="mShop"></div>
     <div class="row" id="shopChips"></div>
     <div class="inv" id="shopList"></div>
-    <p class="hint">點畫面上的店面，阿柴會走過去。生香腸拿去廟口烤，文具幫阿柴上課，鉤織配件會直接戴在小柴犬身上，家具會送進研究室。</p>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點畫面上的店面，阿柴會走過去。生香腸拿去廟口烤，文具幫阿柴上課，鉤織配件會直接戴在小柴犬身上，家具會送進研究室。</p></details>
   </section>
 
   <section class="panel" id="p-temple" hidden>
@@ -245,8 +301,17 @@ html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 7
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
     </div>
-    <p class="hint">點烤架放香腸，變成深褐色、外框發亮時再點一次收起來。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p>
-  </section>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，變成深褐色、外框發亮時再點一次收起來。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
+  </section>  <details class="daily-card"><summary>🐾 今日小目標 · 完成可領 30 元</summary><div class="daily-content">
+    <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
+    <div class="daily-goals">
+      <div class="goal-line"><span class="goal-dot">1</span><span>到信義國小完成一堂課</span><b id="goalClass">待完成</b></div>
+      <div class="goal-line"><span class="goal-dot">2</span><span>今天在廟口賣出 3 條香腸</span><b id="goalSell">0 / 3</b></div>
+    </div>
+    <button class="btn daily-claim" id="bDaily" disabled>完成兩項目標後領取獎勵</button>
+  </div></details>
+    </aside>
+  </main>
 </div>
 
 <script>
