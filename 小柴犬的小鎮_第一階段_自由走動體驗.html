@@ -1224,12 +1224,35 @@ const HOME=(()=>{
  dogs.forEach(d=>{d.cell={x:d.x,y:d.y};d.route=[];d.target=null;});
  let selected=0,marker=null;
  const panel=$('p-home');
- panel.querySelector('.hint').textContent='點空地散步，點家具互動；點柴犬或名字切換角色。左側綠色門口可以走到研究室。';
+ panel.querySelector('.hint').textContent='點空地散步，點家具後選擇睡覺、吃點心或看看；點柴犬或名字切換角色。左側綠色門口可以走到研究室。';
+ const interaction=document.createElement('section');
+ interaction.hidden=true;interaction.setAttribute('aria-label','物件互動選項');
+ interaction.innerHTML='<p class="sub" id="homeObjectTitle"></p><div class="row" id="homeObjectActions"></div>';
+ panel.insertBefore(interaction,panel.querySelector('.instructions'));
+ let chosenObject=null;
+ function closeOptions(){chosenObject=null;interaction.hidden=true;}
+ function options(o){
+  chosenObject=o;interaction.hidden=false;
+  $('homeObjectTitle').textContent=o.name+' · 想讓'+NAMES[dogs[selected].id]+'做什麼？';
+  const actions=$('homeObjectActions');actions.replaceChildren();
+  const choices=o.id==='sofa'||o.id==='bed'?[['sleep','躺下睡覺'],['look','看看']]:o.id==='table'?[['eat','吃點心'],['look','看看']]:[['look','看看']];
+  choices.push(['cancel','取消']);
+  choices.forEach(([action,label])=>{const b=document.createElement('button');b.type='button';b.className='btn'+(action==='cancel'?' ghost':'');b.textContent=label;b.onclick=()=>{if(action==='cancel'){closeOptions();return;}closeOptions();moveTo(o,action);};actions.appendChild(b);});
+  say('點選下方選項，讓柴犬和'+o.name+'互動。');
+ }
+ function stopAction(d){d.homeAction=null;d.target=null;d.exitArrival=null;}
+ function arrive(d){
+  const o=d.target;if(!o)return;d.target=null;
+  if(d.pendingAction==='sleep'||d.pendingAction==='eat'){
+   d.homeAction={kind:d.pendingAction,object:o,started:T};
+   if(d===dogs[selected])say(NAMES[d.id]+(d.pendingAction==='sleep'?'在'+o.name+'上睡著了。點空地就能起床。':'正在餐桌旁吃點心！點空地就能離開。'));
+  }else if(d===dogs[selected])say('✨ '+o.txt);
+ }
  const buttons=[...document.querySelectorAll('#homeDogs button')];
  buttons.forEach(b=>{b.setAttribute('aria-pressed',b.dataset.dog==='0'?'true':'false');});
  const say=msg=>{$('homeMsg').textContent=msg;};
  say('陽光、木頭香，還有三隻小柴犬。點一塊空地，開始今天的小小散步。');
- function select(i){cancelJourney();selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
+ function select(i){cancelJourney();closeOptions();selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
  buttons.forEach((b,i)=>b.onclick=()=>select(i));
  buttons[0].classList.remove('ghost');
 
@@ -1345,10 +1368,21 @@ const HOME=(()=>{
   }
  }
  function drawDog(c,d,i){
-  const walking=d.route.length>0,fr=walking?Math.floor(T*8)%2:0,p=iso(d.x+.5,d.y+.5);
+  const action=d.homeAction,o=action&&action.object;
+  const sleeping=action&&action.kind==='sleep',eating=action&&action.kind==='eat';
+  const walking=d.route.length>0,fr=walking?Math.floor(T*8)%2:0;
+  const p=sleeping?iso(o.x+o.w/2,o.y+o.h*.65,o.id==='sofa'?15:6):iso(d.x+.5,d.y+.5);
   ellPx(c,p[0],p[1]+1,10,3,'rgba(76,53,37,.2)');
   const x=Math.round(p[0]-17),y=Math.round(p[1]-26-(walking?fr:Math.sin(T*2+i)>.8?1:0));
-  c.save();if(d.dir<0){c.translate(x*2+34,0);c.scale(-1,1);}c.drawImage(SPR[d.id][fr],x,y);drawAcc(c,d.id,x,y,false);c.restore();
+  c.save();if(d.dir<0){c.translate(x*2+34,0);c.scale(-1,1);}if(sleeping){
+   c.drawImage(SPR[d.id][0],x,y+11,34,17);
+   rect(c,x+22,y+18,4,1,'#49352a');
+  }else{
+   const bob=eating?Math.round(Math.sin(T*9)):0;
+   c.drawImage(SPR[d.id][fr],x,y+bob);drawAcc(c,d.id,x,y+bob,false);
+  }c.restore();
+  if(sleeping){c.fillStyle='#fff4d2';c.font='bold 9px sans-serif';c.fillText('Z',p[0]+8,p[1]-21-Math.floor((T%2)*3));}
+  if(eating){ellPx(c,p[0]+(d.dir<0?-12:12),p[1]-6,5,2,'#f3e5c5');ellPx(c,p[0]+(d.dir<0?-12:12),p[1]-7,3,1,'#bd8550');}
   if(i===selected){const yy=y-5;pattern(c,['..x..','.xxx.','xxxxx','..x..'],Math.round(p[0]-2),yy,{x:'#d7a557'});}
  }
  function pathTo(start,tx,ty){
@@ -1364,7 +1398,7 @@ const HOME=(()=>{
   const a=iso(o.x,o.y,o.height),b=iso(o.x+o.w,o.y,o.height),d=iso(o.x,o.y+o.h,o.height),e=iso(o.x+o.w,o.y+o.h,o.height);
   return [[a,b,e,d],[d,e,iso(o.x+o.w,o.y+o.h),iso(o.x,o.y+o.h)],[b,e,iso(o.x+o.w,o.y+o.h),iso(o.x+o.w,o.y)]].some(points=>inPoly(bx,by,points));
  }
- function layers(){return [...objects.map(o=>({depth:o.x+o.y+o.w+o.h-.1,o})),...dogs.map((d,i)=>({depth:d.x+d.y+1,d,i}))].sort((a,b)=>a.depth-b.depth);}
+ function layers(){return [...objects.map(o=>({depth:o.x+o.y+o.w+o.h-.1,o})),...dogs.map((d,i)=>({depth:d.homeAction&&d.homeAction.kind==='sleep'?d.homeAction.object.x+d.homeAction.object.y+d.homeAction.object.w+d.homeAction.object.h:d.x+d.y+1,d,i}))].sort((a,b)=>a.depth-b.depth);}
  function tap(bx,by){
   const d=dogs[selected];let obj=null;
   // Pick front-to-back in the same order as rendering, including elevated furniture faces.
@@ -1373,6 +1407,11 @@ const HOME=(()=>{
    else{const p=iso(item.d.x+.5,item.d.y+.5);if(Math.abs(bx-p[0])<13&&by>p[1]-26&&by<p[1]+2){select(item.i);return;}}
   }
   const u=(bx-ox)/tw,v=(by-oy)/th,gx=Math.floor((u+v)/2),gy=Math.floor((v-u)/2);
+  if(obj){options(obj);return;}
+  closeOptions();moveTo(null,null,gx,gy);
+ }
+ function moveTo(obj,action,gx,gy){
+  const d=dogs[selected];
   // Complete the current edge before rerouting: no rounding into a wall or snapping backwards.
   const prefix=d.route.length?[d.route[0]]:[],start=prefix[0]||d.cell;let route=null;
   if(obj){
@@ -1384,18 +1423,19 @@ const HOME=(()=>{
    candidates.sort((a,b)=>a.length-b.length);route=candidates[0];
    if(!route){say('這裡暫時走不過去，換一邊試試看。');return;}
   }else{if(blocked(gx,gy))return;route=pathTo(start,gx,gy);if(!route)return;}
-  d.route=prefix.concat(route);d.target=obj;
+  stopAction(d);d.pendingAction=action;d.route=prefix.concat(route);d.target=obj;
   const end=d.route[d.route.length-1]||d.cell;marker={x:end.x,y:end.y,until:T+2};
   say(obj?'🐾 '+NAMES[d.id]+'正在走向'+obj.name+'…':'🐾 '+NAMES[d.id]+'出發散步！');
-  if(!d.route.length&&obj){say('✨ '+obj.txt);d.target=null;}
+  if(!d.route.length&&obj)arrive(d);
  }
  function update(dt){
   dogs.forEach((d,i)=>{
+   if(d.homeAction&&d.homeAction.kind==='eat'&&T-d.homeAction.started>8){d.homeAction=null;if(i===selected)say(NAMES[d.id]+'吃完點心，心滿意足！');}
    if(!d.route.length)return;
    const next=d.route[0],dx=next.x-d.x,dy=next.y-d.y,dist=Math.hypot(dx,dy),step=2.6*dt;
    if(Math.abs(dx-dy)>.001)d.dir=dx-dy>0?1:-1;
    if(dist<=step){d.x=next.x;d.y=next.y;d.cell={x:next.x,y:next.y};d.route.shift();
-    if(!d.route.length&&d.target){if(i===selected)say('✨ '+d.target.txt);d.target=null;}
+    if(!d.route.length&&d.target)arrive(d);
     if(!d.route.length&&d.exitArrival){const done=d.exitArrival;d.exitArrival=null;done();}
    }else{d.x+=dx/dist*step;d.y+=dy/dist*step;}
   });
@@ -1412,6 +1452,7 @@ const HOME=(()=>{
   c.restore();
  }
  function walkToExit(done){
+  closeOptions();stopAction(dogs[selected]);
   const d=dogs[selected],prefix=d.route.length?[d.route[0]]:[],start=prefix[0]||d.cell,e=EXITS.home;
   const path=pathTo(start,e.x,e.y);if(!path)return false;
   d.route=prefix.concat(path);d.target=null;d.exitArrival=done;
@@ -1424,9 +1465,9 @@ const HOME=(()=>{
  }
  function enter(id){
   const i=dogs.findIndex(d=>d.id===id),d=dogs[i<0?0:i],e=EXITS.home;
-  d.x=e.x;d.y=e.y;d.cell={x:e.x,y:e.y};d.route=[];d.target=null;d.exitArrival=null;select(i<0?0:i);
+  d.x=e.x;d.y=e.y;d.cell={x:e.x,y:e.y};d.route=[];stopAction(d);select(i<0?0:i);
  }
- return {draw,tap,update,walkToExit,cancelExit,enter,selectedId:()=>dogs[selected].id,
+ return {draw,tap,update,walkToExit,cancelExit,enter,closeOptions,selectedId:()=>dogs[selected].id,
   exitHit:(x,y)=>inPoly(x,y,exitFace(iso,EXITS.home)),
   exitLabel:()=>iso(0,(EXITS.home.start+EXITS.home.end)/2,EXITS.home.height+5)};
 })();
@@ -1494,7 +1535,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
 }});
 function showScene(s){
  if(!Object.prototype.hasOwnProperty.call(SC,s))return;
- cancelJourney();cur=s;setMap(false);
+ cancelJourney();HOME.closeOptions();cur=s;setMap(false);
  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));
  for(const k in SC)$('p-'+k).hidden=k!==s;
  $('sceneName').textContent=sceneInfo[s].name;$('sceneCaption').textContent=sceneInfo[s].caption;travelStatus.textContent=sceneInfo[s].hint;
