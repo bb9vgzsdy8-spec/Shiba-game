@@ -120,6 +120,45 @@ canvas{image-rendering:pixelated}
   .tab{font-size:12px;padding:10px 2px}
 }
 
+/* Travel controls and crisp display: text stays in the DOM, pixels stay on the canvas. */
+:root{--muted:#695746;--accent:#985b39;--good:#486c4b;--blue:#486b83;--red:#984a46;--violet:#6e578d}
+:root{--page-glow:#fff9f0}
+html,body{background:radial-gradient(ellipse at top,var(--page-glow),var(--bg) 70%)}
+:root[data-theme="dark"]{--page-glow:#332a23;--muted:#d1c1b1}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--page-glow:#332a23;--muted:#d1c1b1}}
+.btn{background:#985b39}.btn.good,.btn.daily-claim:not(:disabled){background:#486c4b}.btn.blue{background:#486b83}.btn.red{background:#984a46}.btn.violet{background:#6e578d}
+.hud b{color:var(--accent)}.tabs{background:var(--panel)}
+.stage-screen{position:relative;height:0;padding-top:73.75%;background:#dedcc6}
+.stage-screen>canvas{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated}
+.stage-caption{margin:0;padding:12px 14px;background:var(--panel);color:var(--ink);font-size:16px;line-height:1.5;text-align:center}
+.travel-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0}
+.location-label{font-size:14px;color:var(--muted);margin:0 0 2px}
+#sceneName{font-size:19px;margin:0;line-height:1.4}
+.map-toggle{font:inherit;font-weight:600;font-size:15px;min-height:44px;padding:9px 15px;border:1px solid #b8936c;border-radius:12px;background:var(--panel);color:var(--ink);cursor:pointer}
+.map-toggle[aria-expanded="true"]{background:#e3ead8;color:#354e38;border-color:#879f78}
+.travel-map{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.map-hint{grid-column:1/-1;margin:0 0 3px;font-size:14px;color:var(--muted)}
+.map-place{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:106px;padding:12px 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.map-place:hover{border-color:#8b9f78;background:#eff2e6;color:#354e38}
+.map-place[aria-current="location"]{border:2px solid #6e8862;background:#e5ecdc;color:#354e38}
+.map-icon{font-size:26px;line-height:1.2}.map-place small{font-size:14px}
+.door-label{position:absolute;transform:translate(-18%,-100%);z-index:1;min-height:44px;padding:6px 10px;border:2px solid #9b7754;border-radius:10px;background:#fff7df;color:#493521;box-shadow:0 2px 0 rgba(73,53,33,.16);font:inherit;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
+.door-label::after{content:'';position:absolute;left:20px;bottom:-7px;width:9px;height:9px;transform:rotate(45deg);background:#fff7df;border-right:2px solid #9b7754;border-bottom:2px solid #9b7754}
+.travel-status{margin:0;min-height:1.6em;color:var(--muted);font-size:14px;line-height:1.6}
+.tagline,.hud,.daily-head small,.daily-bonus,.goal-line,.goal-line b,.chip small,.btn small,.inv-item small,.sub,.hint,.daily-claim{font-size:14px}
+.tagline,.hint,.sub,.chip small,.inv-item small,.daily-head small{color:var(--muted)}
+.tab{font-size:15px;min-height:44px}.btn,.chip{min-height:44px}
+.msg{font-size:16px}.goal-line b{color:var(--accent)}
+/* Panels use the same theme variables so macOS dark mode also keeps readable text. */
+.hud span,.daily-card,.goal-line,.msg,.hint,.qbox,.chip,.grill{background:var(--panel);color:var(--ink)}
+.tab[aria-selected="true"],.chip[aria-pressed="true"]{background:var(--line);color:var(--ink)}
+@media(max-width:520px){
+ .hud,.tagline{font-size:14px}.tab{font-size:14px;padding:10px 2px}
+ .travel-map{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.map-place:last-child{grid-column:1/-1}
+ .map-place{min-height:85px}.stage-caption{font-size:15px;padding:10px}
+ .door-label{padding:5px 7px;font-size:14px}
+}
+
 </style>
 </head>
 <body>
@@ -128,7 +167,23 @@ canvas{image-rendering:pixelated}
     <div class="brand"><div class="brand-mark">柴</div><div><h1>小柴犬的小鎮</h1><div class="tagline">今天也和三隻小柴犬一起，慢慢過日子 ♡</div></div></div>
     <div class="hud"><span id="hClock"></span><span>零用錢 <b id="hMoney">0</b> 元</span></div>
   </header>
-  <div class="stage"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas></div>
+  <div class="travel-tools">
+    <div><p class="location-label">目前位置</p><h2 id="sceneName">柴犬的家</h2></div>
+    <button type="button" class="map-toggle" id="mapToggle" aria-expanded="false" aria-controls="travelMap">小地圖 · 快速旅行</button>
+  </div>
+  <nav class="travel-map" id="travelMap" aria-label="小地圖快速旅行" hidden>
+    <p class="map-hint">想去哪裡呢？點選地點，就能直接前往。</p>
+    <button type="button" class="map-place" data-travel="home" aria-current="location"><span class="map-icon" aria-hidden="true">🏡</span><strong>柴犬的家</strong><small>目前位置</small></button>
+    <button type="button" class="map-place" data-travel="lab"><span class="map-icon" aria-hidden="true">💡</span><strong>研究室</strong><small>發明與休息</small></button>
+    <button type="button" class="map-place" data-travel="school"><span class="map-icon" aria-hidden="true">🏫</span><strong>信義國小</strong><small>一起上課</small></button>
+    <button type="button" class="map-place" data-travel="temple"><span class="map-icon" aria-hidden="true">🏮</span><strong>廟口</strong><small>香腸攤開張</small></button>
+    <button type="button" class="map-place" data-travel="shop"><span class="map-icon" aria-hidden="true">🛍️</span><strong>商店街</strong><small>慢慢逛小店</small></button>
+  </nav>
+  <div class="stage">
+    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
+    <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
+  </div>
+  <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
   <section class="daily-card" aria-label="今日小目標">
     <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
     <div class="daily-goals">
@@ -196,8 +251,30 @@ canvas{image-rendering:pixelated}
 
 <script>
 (function(){
-const cv=document.getElementById('cv'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+const cv=document.getElementById('cv'),sceneCanvas=document.createElement('canvas'),g=sceneCanvas.getContext('2d'),display=cv.getContext('2d');g.imageSmoothingEnabled=false;
 const W=320,H=236,OX=150,OY=86,GW=10,GH=8,WH=70;
+sceneCanvas.width=W;sceneCanvas.height=H;g.imageSmoothingEnabled=false;
+// Resize the display backing store, never the logical art or hit-test coordinates.
+let displayDpr=0;
+function resizeDisplay(){
+  const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  if(!r.width||!r.height)return;
+  const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;display.imageSmoothingEnabled=false;}
+  displayDpr=dpr;
+}
+function present(){
+  if(displayDpr!==(window.devicePixelRatio||1))resizeDisplay();
+  display.imageSmoothingEnabled=false;display.drawImage(sceneCanvas,0,0,cv.width,cv.height);
+}
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizeDisplay).observe(cv);
+window.addEventListener('resize',resizeDisplay);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',resizeDisplay);
+resizeDisplay();
+const EXITS={
+ home:{to:'lab',x:0,y:6,start:5.9,end:6.95,height:32},
+ lab:{to:'home',x:0,y:5,start:5.05,end:5.95,height:34}
+};
 const P=(x,y,z)=>[OX+(x-y)*16,OY+(x+y)*8-(z||0)];
 const hash=i=>{const x=Math.sin(i*12.9898+78.233)*43758.5453;return x-Math.floor(x);};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -258,7 +335,10 @@ function makeDog(p,frame,sleep){
   if(p.bigWhite)ell(21,hy+4.3,7.6,3.6,p.white);
   ell(24.5,hy+2.6,4.6,2.9,p.white);
   for(const mx of[17,22.5]){setT(mx,hy-4,p.maro);setT(mx+1,hy-4,p.maro);setT(mx,hy-3,p.maro);setT(mx+1,hy-3,p.maro);}
-  const ey=hy-1;for(const ex of[16,21.5]){setT(ex,ey,OUT);setT(ex+1,ey+1,OUT);setT(ex+2,ey+1,OUT);setT(ex+3,ey,OUT);}
+  const ey=hy-1;for(const ex of[16,21.5]){
+    if(sleep){setT(ex,ey,OUT);setT(ex+1,ey+1,OUT);setT(ex+2,ey+1,OUT);setT(ex+3,ey,OUT);}
+    else{for(let dx=0;dx<2;dx++)for(let dy=0;dy<3;dy++)setT(ex+dx,ey+dy,OUT);setT(ex,ey,'#fff8e6');}
+  }
   setT(16.5,hy+1.6,p.blush);setT(17.5,hy+1.6,p.blush);
   for(let i=0;i<3;i++){setT(27+i,hy+1,p.nose);setT(27+i,hy+2,p.nose);}setT(28,hy+1,shade(p.nose,2.2));
   setT(26,hy+4,OUT);setT(27,hy+4.6,OUT);setT(28,hy+4,OUT);
@@ -364,6 +444,19 @@ function skyBands(ph){return ph==='night'?['#1b1f3d','#24294f','#2f3563','#3b3f7
 const cache={};
 function cached(key,fn){if(!cache[key]){const cnv=document.createElement('canvas');cnv.width=W;cnv.height=H;const c=cnv.getContext('2d');sceneBackdrop(c,key.endsWith('night'));fn(c);cache[key]=cnv;}return cache[key];}
 
+function exitFace(project,exit){return [project(0,exit.start,0),project(0,exit.end,0),project(0,exit.end,exit.height),project(0,exit.start,exit.height)];}
+function drawExit(c,project,exit){
+  const face=exitFace(project,exit);poly(c,face,'#6b5944');
+  for(let i=0;i<4;i++)lineP(c,face[i],face[(i+1)%4],'#e8c89a');
+  const a=exit.start+.09,b=exit.end-.09;
+  poly(c,[project(0,a,2),project(0,b,2),project(0,b,exit.height-2),project(0,a,exit.height-2)],'#8a9e86');
+  for(let u=a+.14;u<b;u+=.18)lineP(c,project(0,u,3),project(0,u,exit.height-3),'#6c836e');
+  poly(c,[project(0,a+.1,18),project(0,b-.1,18),project(0,b-.1,exit.height-6),project(0,a+.1,exit.height-6)],'#d8e1cc');
+  const knob=project(0,a+.12,11);rect(c,knob[0],knob[1],2,2,'#f6d695');
+  poly(c,[project(0,exit.start),project(.38,exit.start),project(.38,exit.end),project(0,exit.end)],'#d8bd8e');
+  lineP(c,project(.38,exit.start),project(.38,exit.end),'#8d7253');
+}
+
 // Shared art details stay on walls, shelves or already occupied tiles.
 function sceneBackdrop(c,night){
   c.fillStyle=night?'#37474b':'#dddcc6';c.fillRect(0,0,W,H);
@@ -465,7 +558,7 @@ function labRoom(c,ph){
   {const a=P(6.2,0,52),b=P(6.2,0,38);line(c,a[0],a[1],b[0],b[1],'#7a5233');rect(c,a[0]-3,a[1]-2,7,3,'#5a6068');}
   {const q=P(6.9,0,50);rect(c,q[0],q[1],9,6,'#c8cfd6');rect(c,q[0]+8,q[1]-1,3,3,'#a0522d');}
   {const q=P(0,6.6,52);ellPx(c,q[0],q[1],5,5.5,'#5b3a26');ellPx(c,q[0],q[1],3.8,4.3,'#f6ead2');px(c,q[0],q[1]-2,OUT);px(c,q[0],q[1]-1,OUT);px(c,q[0]+1,q[1],OUT);}
-  labDetails(c);
+  labDetails(c);drawExit(c,P,EXITS.lab);
 }
 function drawCerts(c){const n=Math.min(6,S.cert);for(let i=0;i<n;i++){const col=i%3,row=Math.floor(i/3),x0=8.2+col*.55,z0=52-row*14;
   quad(c,x0,0,x0+.48,0,z0-12,z0,'y','#c9952b');quad(c,x0+.05,0,x0+.43,0,z0-10.5,z0-1.5,'y','#fbf6e8');const q=P(x0+.3,0,z0-8);px(c,q[0],q[1],'#c0392b');px(c,q[0]+1,q[1],'#c0392b');
@@ -564,7 +657,7 @@ function adjacent(o,blocked){const r=[];if(o.wall){for(let y=o.y;y<o.y+o.d;y++)i
   if(o.walk){for(let x=o.x;x<o.x+o.w;x++)for(let y=o.y;y<o.y+o.d;y++)r.push([x,y]);return r;}
   for(let x=o.x-1;x<=o.x+o.w;x++)for(let y=o.y-1;y<=o.y+o.d;y++){const inside=x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.d;if(!inside&&!blocked(x,y)&&((x>=o.x&&x<o.x+o.w)||(y>=o.y&&y<o.y+o.d)))r.push([x,y]);}return r;}
 function labInteract(d,o){$('mLab').textContent=NAMES[d.id]+'走向'+o.name+'……';const tg=adjacent(o,LAB.blocked);if(!tg.length)return;if(!goTo(d,tg,LAB.blocked,()=>LACT[o.id](d)))labSay(d.id,'過不去耶……');}
-function selectDog(i){S.sel=i;document.querySelectorAll('#chips .chip').forEach((b,j)=>b.setAttribute('aria-pressed',j===i?'true':'false'));const d=LAB.dogs[i];setIcon(d,'heart',1.5);
+function selectDog(i){cancelJourney();S.sel=i;document.querySelectorAll('#chips .chip').forEach((b,j)=>b.setAttribute('aria-pressed',j===i?'true':'false'));const d=LAB.dogs[i];setIcon(d,'heart',1.5);
   labSay(d.id,{a:'快～點～，要去哪裡？',b:'嗯，我在。',c:'塔搭！輪到我了！'}[d.id]);}
 function toggleLamp(){S.lamp=!S.lamp;$('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';save();}
 
@@ -1066,12 +1159,12 @@ const HOME=(()=>{
  dogs.forEach(d=>{d.cell={x:d.x,y:d.y};d.route=[];d.target=null;});
  let selected=0,marker=null;
  const panel=$('p-home');
- panel.querySelector('.hint').textContent='點空地散步，點家具走近互動；點柴犬或名字切換角色。三隻柴犬，一起在家慢慢過日子。';
+ panel.querySelector('.hint').textContent='點空地散步，點家具互動；點柴犬或名字切換角色。左側綠色門口可以走到研究室。';
  const buttons=[...document.querySelectorAll('#homeDogs button')];
  buttons.forEach(b=>{b.setAttribute('aria-pressed',b.dataset.dog==='0'?'true':'false');});
  const say=msg=>{$('homeMsg').textContent=msg;};
  say('陽光、木頭香，還有三隻小柴犬。點一塊空地，開始今天的小小散步。');
- function select(i){selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
+ function select(i){cancelJourney();selected=i;buttons.forEach((b,j)=>{b.setAttribute('aria-pressed',i===j?'true':'false');b.classList.toggle('ghost',i!==j);});say('現在陪'+NAMES[dogs[i].id]+'散步，點家具也可以互動喔。');}
  buttons.forEach((b,i)=>b.onclick=()=>select(i));
  buttons[0].classList.remove('ghost');
 
@@ -1144,6 +1237,7 @@ const HOME=(()=>{
   const paw=iso(4,4.15);ellPx(c,paw[0],paw[1],4,2,'#cfd0ad');
   for(const [x,y] of [[-4,-3],[0,-4],[4,-3]])ellPx(c,paw[0]+x,paw[1]+y,1,1,'#cfd0ad');
   if(ph!=='night')surface(c,[iso(.3,1.4),iso(.3,3.3),iso(3.5,5.4),iso(3.5,3.5)],'rgba(255,235,176,.16)');
+  drawExit(c,iso,EXITS.home);
  }
  const backgrounds={};
  function furniture(c,o){
@@ -1237,6 +1331,7 @@ const HOME=(()=>{
    if(Math.abs(dx-dy)>.001)d.dir=dx-dy>0?1:-1;
    if(dist<=step){d.x=next.x;d.y=next.y;d.cell={x:next.x,y:next.y};d.route.shift();
     if(!d.route.length&&d.target){if(i===selected)say('✨ '+d.target.txt);d.target=null;}
+    if(!d.route.length&&d.exitArrival){const done=d.exitArrival;d.exitArrival=null;done();}
    }else{d.x+=dx/dist*step;d.y+=dy/dist*step;}
   });
  }
@@ -1249,23 +1344,114 @@ const HOME=(()=>{
   if(ph!=='day'){c.fillStyle=ph==='night'?'rgba(36,42,65,.28)':'rgba(205,132,77,.08)';c.fillRect(0,0,W,H);}
   const lamp=iso(7.5,.5,24),glow=c.createRadialGradient(lamp[0],lamp[1],1,lamp[0],lamp[1],35);
   glow.addColorStop(0,ph==='night'?'rgba(255,215,141,.3)':'rgba(255,230,173,.12)');glow.addColorStop(1,'rgba(255,215,141,0)');c.fillStyle=glow;c.fillRect(lamp[0]-35,lamp[1]-35,70,70);
-  c.fillStyle=ph==='night'?'#e6d6b6':'#786952';c.font='10px "PingFang TC","Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('柴犬的家 · 一起慢慢過日子',160,225);c.restore();
+  c.restore();
  }
- return {draw,tap,update};
+ function walkToExit(done){
+  const d=dogs[selected],prefix=d.route.length?[d.route[0]]:[],start=prefix[0]||d.cell,e=EXITS.home;
+  const path=pathTo(start,e.x,e.y);if(!path)return false;
+  d.route=prefix.concat(path);d.target=null;d.exitArrival=done;
+  marker={x:e.x,y:e.y,until:T+8};
+  if(!d.route.length){d.exitArrival=null;done();}return true;
+ }
+ function cancelExit(){
+  dogs.forEach(d=>{if(d.exitArrival){d.exitArrival=null;d.route=d.route.slice(0,1);}});
+  marker=null;
+ }
+ function enter(id){
+  const i=dogs.findIndex(d=>d.id===id),d=dogs[i<0?0:i],e=EXITS.home;
+  d.x=e.x;d.y=e.y;d.cell={x:e.x,y:e.y};d.route=[];d.target=null;d.exitArrival=null;select(i<0?0:i);
+ }
+ return {draw,tap,update,walkToExit,cancelExit,enter,selectedId:()=>dogs[selected].id,
+  exitHit:(x,y)=>inPoly(x,y,exitFace(iso,EXITS.home)),
+  exitLabel:()=>iso(0,(EXITS.home.start+EXITS.home.end)/2,EXITS.home.height+5)};
 })();
 
 // ================= scene switching & input =================
-const SC={home:HOME,lab:LAB,school:SCH,temple:TP,shop:SPS};let cur='home';
+const SC={home:HOME,lab:LAB,school:SCH,temple:TP,shop:SPS};let cur='home',journey=null;
+const sceneInfo={
+ home:{name:'柴犬的家',caption:'柴犬的家 · 一起慢慢過日子',hint:'點門口可走到研究室，也可以打開小地圖。'},
+ lab:{name:'研究室',caption:'二柴的研究室 · 今天想做什麼發明？',hint:'點門口可走回柴犬的家，也可以打開小地圖。'},
+ school:{name:'信義國小',caption:'信義國小 · 今天也一起學一點點',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'},
+ temple:{name:'廟口',caption:'廟口 · 香腸攤的溫暖日常',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'},
+ shop:{name:'商店街',caption:'商店街 · 慢慢逛，喜歡再帶回家',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'}
+};
+const travelStatus=$('travelStatus'),mapToggle=$('mapToggle'),travelMap=$('travelMap'),doorLabel=$('doorLabel');
+const placeHints={home:'一起休息',lab:'發明與休息',school:'一起上課',temple:'香腸攤開張',shop:'慢慢逛小店'};
+function setMap(open){
+ const restoreFocus=!open&&travelMap.contains(document.activeElement);
+ travelMap.hidden=!open;mapToggle.setAttribute('aria-expanded',String(open));
+ if(restoreFocus)mapToggle.focus({preventScroll:true});
+}
+mapToggle.onclick=()=>setMap(travelMap.hidden);
+function cancelJourney(message){
+ if(!journey)return;
+ const old=journey;journey=null;
+ if(old.from==='home')HOME.cancelExit();
+ else if(old.actor.goal===old.arrive){old.actor.goal=null;if(old.actor.state==='walk'){old.actor.path=old.actor.path.slice(0,1);if(!old.actor.path.length)old.actor.state='idle';}}
+ travelStatus.textContent=message||sceneInfo[cur].hint;
+}
+function startJourney(){
+ const exit=EXITS[cur];if(!exit||journey)return;
+ const from=cur,actor=from==='lab'?LAB.dogs[S.sel]:null,id=actor?actor.id:HOME.selectedId();
+ const trip={from,to:exit.to,actor,id,elapsed:0,arrive:null};
+ trip.arrive=()=>{
+  if(journey!==trip||cur!==from)return;
+  journey=null;showScene(trip.to);
+  if(trip.to==='home')HOME.enter(id);
+  else{const i=LAB.dogs.findIndex(d=>d.id===id),d=LAB.dogs[i],e=EXITS.lab;
+   d.x=e.x;d.y=e.y;d.path=[];d.goal=null;d.state='idle';d.idleT=4;selectDog(i);}
+  travelStatus.textContent=NAMES[id]+'到'+sceneInfo[trip.to].name+'了。';
+ };
+ journey=trip;travelStatus.textContent=NAMES[id]+'正在走向'+sceneInfo[trip.to].name+'的門口；點空地可改道。';
+ const found=from==='home'?HOME.walkToExit(trip.arrive):goTo(actor,[[exit.x,exit.y]],LAB.blocked,trip.arrive);
+ if(!found)cancelJourney('這個門口暫時走不過去，請換個位置再試，或使用小地圖。');
+}
+function updateJourney(dt){
+ if(!journey)return;
+ journey.elapsed+=dt;
+ if(journey.from==='lab'&&(journey.actor.state!=='walk'||journey.actor.goal!==journey.arrive)){
+  cancelJourney('已停止前往門口；準備好時可以再點一次。');return;
+ }
+ if(journey.elapsed>20)cancelJourney('還沒走到門口，已停止這次移動。可以再試一次，或使用小地圖。');
+}
 function toGrid(bx,by){const u=(bx-OX)/16,v=(by-OY)/8;return [Math.floor((u+v)/2),Math.floor((v-u)/2)];}
-cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();const bx=(e.clientX-r.left)/r.width*W,by=(e.clientY-r.top)/r.height*H;SC[cur].tap(bx,by);});
-function showScene(s){cur=s;document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));for(const k in SC)$('p-'+k).hidden=k!==s;
-  const names={home:'柴犬的家：等角像素自由走動體驗',lab:'二柴的研究室：發明、休息的地方',school:'信義國小四年級教室',temple:'福德廟廟口：阿柴的香腸攤',shop:'商店街：肉舖、文具店、鉤織小舖、家具雜貨、飲料店'};cv.setAttribute('aria-label',names[s]);
-  if(s==='school'){if(!SCH.class)schSay('t',phase()==='night'?'晚上學校沒開，明天早上再來吧。':'阿柴，準備好就可以上課了。');renderQ();syncSchoolBtns();}
-  if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple')syncTemple();if(s==='shop'){SPS.sig='';SPS.sync();}}
+cv.addEventListener('pointerdown',e=>{
+ if(e.button!==undefined&&e.button!==0)return;
+ const r=cv.getBoundingClientRect(),bx=(e.clientX-r.left)/r.width*W,by=(e.clientY-r.top)/r.height*H;
+ const hit=cur==='home'?HOME.exitHit(bx,by):cur==='lab'&&inPoly(bx,by,exitFace(P,EXITS.lab))&&!LAB.objs.some(o=>!o.wall&&!o.flat&&labObjHit(o,bx,by));
+ if(hit){startJourney();return;}
+ cancelJourney();SC[cur].tap(bx,by);
+});
+doorLabel.onclick=startJourney;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){
+ if(!travelMap.hidden){setMap(false);mapToggle.focus({preventScroll:true});e.preventDefault();}
+ else if(journey){cancelJourney('已取消前往門口。');e.preventDefault();}
+}});
+function showScene(s){
+ if(!Object.prototype.hasOwnProperty.call(SC,s))return;
+ cancelJourney();cur=s;setMap(false);
+ document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));
+ for(const k in SC)$('p-'+k).hidden=k!==s;
+ $('sceneName').textContent=sceneInfo[s].name;$('sceneCaption').textContent=sceneInfo[s].caption;travelStatus.textContent=sceneInfo[s].hint;
+ cv.setAttribute('aria-label',sceneInfo[s].caption+'；點空地移動，點家具互動');
+ document.querySelectorAll('[data-travel]').forEach(b=>{
+  if(b.dataset.travel===s)b.setAttribute('aria-current','location');else b.removeAttribute('aria-current');
+  b.querySelector('small').textContent=b.dataset.travel===s?'目前位置':placeHints[b.dataset.travel];
+ });
+ doorLabel.hidden=!EXITS[s];
+ if(EXITS[s]){
+  const e=EXITS[s],p=s==='home'?HOME.exitLabel():P(0,(e.start+e.end)/2,e.height+5);
+  doorLabel.textContent=sceneInfo[e.to].name+' →';doorLabel.setAttribute('aria-label','走到'+sceneInfo[e.to].name);
+  doorLabel.style.left=p[0]/W*100+'%';doorLabel.style.top=p[1]/H*100+'%';
+ }
+ if(s==='school'){if(!SCH.class)schSay('t',phase()==='night'?'晚上學校沒開，明天早上再來吧。':'阿柴，準備好就可以上課了。');renderQ();syncSchoolBtns();}
+ if(s==='lab')$('bSleep').disabled=phase()!=='night';if(s==='temple')syncTemple();if(s==='shop'){SPS.sig='';SPS.sync();}
+}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showScene(b.dataset.s));
+document.querySelectorAll('[data-travel]').forEach(b=>b.onclick=()=>showScene(b.dataset.travel));
 const chips=$('chips');[['a','阿柴','急性子・愛吃'],['b','二柴','發明家'],['c','小柴','魔術師']].forEach(([id,n,t],i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=n+'<small>'+t+'</small>';b.onclick=()=>selectDog(i);chips.appendChild(b);});
 $('bLamp').onclick=()=>{toggleLamp();$('mLab').textContent=S.lamp?'立燈打開了。':'立燈關掉了。';};
-$('bSleep').onclick=()=>{if(phase()!=='night')return;S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
+$('bSleep').onclick=()=>{if(phase()!=='night')return;cancelJourney();S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
 $('bClass').onclick=startClass;$('bWake').onclick=wake;
 $('bSell').onclick=sell;$('bHit').onclick=hit;$('bFlee').onclick=flee;$('bKara').onclick=kara;$('bOpen').onclick=toggleOpen;$('bBowl').onclick=collectBowl;$('bBBQ').onclick=bbq;
 $('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';
@@ -1273,8 +1459,8 @@ $('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';
 // ================= loop =================
 let last=performance.now()/1000,uiT=0,saveT=0;
 function frame(){const t=performance.now()/1000,dt=Math.min(.05,t-last);last=t;T=t;
-  tick(dt);HOME.update(dt);LAB.update(dt);SCH.update(dt);TP.update(dt);SPS.update(dt);
-  const ph=phase();g.globalCompositeOperation='source-over';g.globalAlpha=1;g.fillStyle='#241b17';g.fillRect(0,0,W,H);SC[cur].draw(ph);
+  tick(dt);HOME.update(dt);LAB.update(dt);SCH.update(dt);TP.update(dt);SPS.update(dt);updateJourney(dt);
+  const ph=phase();g.globalCompositeOperation='source-over';g.globalAlpha=1;g.fillStyle='#241b17';g.fillRect(0,0,W,H);SC[cur].draw(ph);present();
   uiT+=dt;if(uiT>.2){uiT=0;$('hClock').textContent=clockText();$('hMoney').textContent=S.money;syncDailyGoals();
     if(cur==='temple')syncTemple();if(cur==='shop')SPS.sync();if(cur==='school')syncSchoolBtns();if(cur==='lab'){$('bSleep').disabled=ph!=='night';if(S.build||Math.random()<.05)renderInvLite();}}
   saveT+=dt;if(saveT>4){saveT=0;save();}
