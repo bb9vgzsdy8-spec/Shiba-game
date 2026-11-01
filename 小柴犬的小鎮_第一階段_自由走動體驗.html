@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>小柴犬的小鎮</title>
+<title>小柴犬烤香腸</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -219,31 +219,44 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
  .map-icon{font-size:18px}.travel-status{min-height:0}
 }
 
+/* Sausage stand: keep the existing game, bring cooking controls forward. */
+.stall-guide,.grill-guide{margin:0;font-size:14px;line-height:1.4;color:var(--ink)}
+.stall-guide{font-weight:600}.grill-guide{color:var(--muted)}
+#grills .grill{min-height:70px;position:relative;padding-bottom:12px;font-size:14px}
+#grills .grill::after{content:'';position:absolute;bottom:4px;left:5px;right:5px;height:4px;border-radius:2px;background:linear-gradient(to right,#ad6341 var(--heat,0%),var(--line) var(--heat,0%))}
+#grills .grill i{width:38px;height:12px}
+#grills .grill.ready::after{background:#bd8a12}
+#grills .grill:disabled{cursor:default;opacity:.65}
+@media(min-width:900px) and (max-height:740px){
+ #p-temple{gap:5px}#grills .grill{min-height:60px}
+ #p-temple .msg{line-height:1.35}
+}
+@media(min-width:900px) and (max-height:650px){.stall-secondary{grid-template-columns:repeat(5,minmax(0,1fr))}.stall-secondary .btn{font-size:14px;padding:6px 2px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div class="brand"><div class="brand-mark">柴</div><div><h1>小柴犬的小鎮</h1><div class="tagline">今天也和三隻小柴犬一起，慢慢過日子 ♡</div></div></div>
+    <div class="brand"><div class="brand-mark">柴</div><div><h1>小柴犬烤香腸</h1><div class="tagline">和三隻小柴犬一起，烤出香噴噴的每一天 ♡</div></div></div>
     <div class="hud"><span id="hClock"></span><span>零用錢 <b id="hMoney">0</b> 元</span></div>
   </header>
   <div class="travel-tools">
     <div><p class="location-label">目前位置</p><h2 id="sceneName">柴犬的家</h2></div>
-    <button type="button" class="map-toggle" id="mapToggle" aria-expanded="false" aria-controls="travelMap">小地圖 · 快速旅行</button>
+    <button type="button" class="map-toggle" id="mapToggle" aria-expanded="false" aria-controls="travelMap">小鎮選單 · 快速旅行</button>
   </div>
   <nav class="travel-map" id="travelMap" aria-label="小地圖快速旅行" hidden>
     <p class="map-hint">想去哪裡呢？點選地點，就能直接前往。</p>
+    <button type="button" class="map-place" data-travel="temple"><span class="map-icon" aria-hidden="true">🏮</span><strong>香腸攤</strong><small>香腸攤開張</small></button>
     <button type="button" class="map-place" data-travel="home" aria-current="location"><span class="map-icon" aria-hidden="true">🏡</span><strong>柴犬的家</strong><small>目前位置</small></button>
     <button type="button" class="map-place" data-travel="lab"><span class="map-icon" aria-hidden="true">💡</span><strong>研究室</strong><small>發明與休息</small></button>
     <button type="button" class="map-place" data-travel="school"><span class="map-icon" aria-hidden="true">🏫</span><strong>信義國小</strong><small>一起上課</small></button>
-    <button type="button" class="map-place" data-travel="temple"><span class="map-icon" aria-hidden="true">🏮</span><strong>廟口</strong><small>香腸攤開張</small></button>
     <button type="button" class="map-place" data-travel="shop"><span class="map-icon" aria-hidden="true">🛍️</span><strong>商店街</strong><small>慢慢逛小店</small></button>
   </nav>
   <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-s="temple" aria-selected="false">香腸攤</button>
     <button class="tab" role="tab" data-s="home" aria-selected="true">柴犬的家</button>
     <button class="tab" role="tab" data-s="lab" aria-selected="false">研究室</button>
     <button class="tab" role="tab" data-s="school" aria-selected="false">信義國小</button>
-    <button class="tab" role="tab" data-s="temple" aria-selected="false">廟口</button>
     <button class="tab" role="tab" data-s="shop" aria-selected="false">商店街</button>
   </div>
 
@@ -287,21 +300,19 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   </section>
 
   <section class="panel" id="p-temple" hidden>
-    <div class="msg" id="mTemple"></div>
+    <p class="stall-guide">① 開店 → ② 烤香腸 → ③ 收起 → ④ 賣出</p>
+    <div class="g2 stall-primary"><button class="btn good" id="bOpen">開店</button><button class="btn" id="bSell">賣香腸<small>每條 35 元 · 給第一位客人</small></button></div>
+    <div class="msg" id="mTemple" role="status"></div>
     <div class="stats"><span>生香腸 <b id="tRaw">0</b></span><span>烤好的 <b id="tStock">0</b></span><span>碗裡 <b id="tBowl">0</b> 元</span><span>今天賣出 <b id="tSold">0</b> 條</span></div>
-    <div class="g4" id="grills"></div>
-    <div class="g4">
-      <button class="btn" id="bSell">賣香腸<small>給第一位</small></button>
+    <div class="g4" id="grills" aria-label="四個香腸烤架"></div>
+    <div class="g3 stall-secondary">
       <button class="btn red" id="bHit">反擊<small>打跑獵人</small></button>
       <button class="btn ghost" id="bFlee">快閃<small>躲警察</small></button>
       <button class="btn violet" id="bKara">卡拉<small id="karaS">看穿獵人</small></button>
-    </div>
-    <div class="g3">
-      <button class="btn good" id="bOpen">開店</button>
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
     </div>
-    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，變成深褐色、外框發亮時再點一次收起來。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，金色外框與「熟了」表示可以點一下收起；烤焦時點一下清掉。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
   </section>  <details class="daily-card"><summary>🐾 今日小目標 · 完成可領 30 元</summary><div class="daily-content">
     <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
     <div class="daily-goals">
@@ -1033,12 +1044,12 @@ TP.tap=function(bx,by){const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-
   const [gx,gy]=toGrid(bx,by);if(!TP.blocked(gx,gy))goTo(d,[[gx,gy]],TP.blocked);};
 function syncTemple(){const st=$('grills');
   if(!st.children.length){st.innerHTML=[0,1,2,3].map(i=>'<button class="grill" data-g="'+i+'"><i></i><span></span></button>').join('');st.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>grillTap(+b.dataset.g));}
-  TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'好了！':'焦了';});
+  TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'熟了・收起':'烤焦・清掉';b.disabled=!TP.open;b.setAttribute('aria-label','烤架 '+(i+1)+'：'+b.querySelector('span').textContent);b.style.setProperty('--heat',Math.round(s.on?Math.min(1,s.c/.85)*100:0)+'%');});
   $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
   $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
   const kl=Math.max(0,40-(T-TP.karaAt));$('bKara').disabled=kl>0||!TP.open;$('karaS').textContent=kl>0?'冷卻 '+Math.ceil(kl)+' 秒':'看穿獵人';
   ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bBBQ').disabled=S.money<200;
-  if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'這裡是廟口。阿柴的小獵犬號停在廟前，按「開店」開始賣香腸。';}
+  if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'歡迎來到小柴犬香腸攤！按「開店」，再點下方烤架放香腸。';}
 
 // ======================================================================
 // SHOP STREET
@@ -1437,7 +1448,7 @@ const sceneInfo={
  home:{name:'柴犬的家',caption:'柴犬的家 · 一起慢慢過日子',hint:'點門口可走到研究室，也可以打開小地圖。'},
  lab:{name:'研究室',caption:'二柴的研究室 · 今天想做什麼發明？',hint:'點門口可走回柴犬的家，也可以打開小地圖。'},
  school:{name:'信義國小',caption:'信義國小 · 今天也一起學一點點',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'},
- temple:{name:'廟口',caption:'廟口 · 香腸攤的溫暖日常',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'},
+ temple:{name:'香腸攤 · 廟口',caption:'小柴犬烤香腸 · 今天也要香噴噴地開張',hint:'阿柴顧攤、小柴表演，二柴的發明幫忙！其他場景就在上方選單。'},
  shop:{name:'商店街',caption:'商店街 · 慢慢逛，喜歡再帶回家',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'}
 };
 const travelStatus=$('travelStatus'),mapToggle=$('mapToggle'),travelMap=$('travelMap'),doorLabel=$('doorLabel');
@@ -1534,7 +1545,7 @@ let invSig='';function renderInvLite(){const sig=JSON.stringify([S.inv,S.build&&
 document.addEventListener('visibilitychange',save);
 syncDecor();selectDog(Number.isInteger(S.sel)&&S.sel>=0&&S.sel<3?S.sel:1);renderInv();syncDailyGoals();
 $('mLab').textContent='這是二柴的研究室。上方切換到信義國小上課，或去廟口開香腸攤賺錢。';
-showScene('home');requestAnimationFrame(frame);
+showScene('temple');requestAnimationFrame(frame);
 })();
 </script>
 </body>
