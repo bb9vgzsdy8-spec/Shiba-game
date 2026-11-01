@@ -232,6 +232,21 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
  #p-temple .msg{line-height:1.35}
 }
 @media(min-width:900px) and (max-height:650px){.stall-secondary{grid-template-columns:repeat(5,minmax(0,1fr))}.stall-secondary .btn{font-size:14px;padding:6px 2px}}
+/* Counter overlay: DOM labels stay sharp; transparent targets sit on the pixel art. */
+#counterControls{position:absolute;inset:0;pointer-events:none}
+#counterControls button{pointer-events:auto}
+.counter-sign{position:absolute;top:2%;left:24%;width:52%;text-align:center;font-size:14px;font-weight:600;color:#493120;background:#fff1d7;border:1px solid #ac7958;border-radius:4px;padding:3px}
+#counterCustomer{position:absolute;left:36%;top:15%;width:28%;height:42%;border:0;background:transparent;cursor:pointer;font:inherit;color:#493120;padding:0;display:flex;justify-content:center;align-items:flex-start}
+#customerOrder{background:#fff8df;border:2px solid #9e7655;border-radius:9px;padding:5px 8px;font-size:14px;line-height:1.4;box-shadow:0 2px 0 #b99a6b}
+#counterCustomer:disabled{cursor:default}
+#counterControls #grills{position:absolute;left:15.3125%;top:69.4915%;width:66.25%;height:24.1525%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+#counterControls #grills .grill{background:transparent;border:2px solid transparent;border-radius:5px;min-height:0;padding:0 3px 9px;justify-content:flex-end;box-shadow:none;color:#38291e;opacity:1}
+#counterControls #grills .grill i{display:none}
+#counterControls #grills .grill span{background:#fff2d5;border-radius:4px;padding:2px 3px;font-size:14px;line-height:1.25}
+#counterControls #grills .grill.ready{border-color:#ffda69}
+#counterControls #grills .grill:disabled span{background:#dfd4be}
+#counterControls #grills .grill:hover:not(:disabled){border-color:#fbe8b5}
+@media(max-width:520px){.counter-sign{font-size:12px;padding:1px}#customerOrder{padding:2px 3px;font-size:14px}#counterCustomer{left:29%;width:42%}#counterControls #grills .grill{padding:0 1px 8px}#counterControls #grills .grill span{padding:1px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -263,7 +278,12 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <main class="workspace">
     <div class="play-area">
   <div class="stage">
-    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button></div>
+    <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button>
+      <div id="counterControls" hidden>
+        <button type="button" id="counterCustomer" aria-label="點第一位客人出餐"><span id="customerOrder">按右側「開店」開始</span></button>
+        <div class="g4" id="grills" aria-label="餐車前方四個香腸烤架"></div>
+        <span class="counter-sign">小柴犬炭烤香腸 · 每條 35 元</span>
+      </div></div>
     <p class="stage-caption" id="sceneCaption">柴犬的家 · 一起慢慢過日子</p>
   </div>
   <p class="travel-status" id="travelStatus" role="status" aria-live="polite">點門口可走到研究室，也可以打開小地圖。</p>
@@ -300,11 +320,10 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   </section>
 
   <section class="panel" id="p-temple" hidden>
-    <p class="stall-guide">① 開店 → ② 烤香腸 → ③ 收起 → ④ 賣出</p>
+    <p class="stall-guide">① 開店 → ② 點畫面烤架 → ③ 點客人出餐</p>
     <div class="g2 stall-primary"><button class="btn good" id="bOpen">開店</button><button class="btn" id="bSell">賣香腸<small>每條 35 元 · 給第一位客人</small></button></div>
     <div class="msg" id="mTemple" role="status"></div>
     <div class="stats"><span>生香腸 <b id="tRaw">0</b></span><span>烤好的 <b id="tStock">0</b></span><span>碗裡 <b id="tBowl">0</b> 元</span><span>今天賣出 <b id="tSold">0</b> 條</span></div>
-    <div class="g4" id="grills" aria-label="四個香腸烤架"></div>
     <div class="g3 stall-secondary">
       <button class="btn red" id="bHit">反擊<small>打跑獵人</small></button>
       <button class="btn ghost" id="bFlee">快閃<small>躲警察</small></button>
@@ -312,7 +331,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
     </div>
-    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，金色外框與「熟了」表示可以點一下收起；烤焦時點一下清掉。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸，金色外框與「熟了」表示可以點一下收起；烤焦時點一下清掉。收起後點窗口前的客人出餐，也可使用「賣香腸」按鈕。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
   </section>  <details class="daily-card"><summary>🐾 今日小目標 · 完成可領 30 元</summary><div class="daily-content">
     <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
     <div class="daily-goals">
@@ -952,33 +971,69 @@ function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;poly(c,[P
   if(TP.stock>0){const q=P(x+.4,y+d+.15,12);for(let i=0;i<Math.min(4,TP.stock);i++)rect(c,q[0]+i*4,q[1]-2,3,2,'#a8452c');}}
 const burnAt=()=>S.inv.flipper?1.7:1.25;
 function sCol(v){if(v<.5)return '#e7899a';if(v<.85)return '#c8664a';if(v<burnAt())return '#a8452c';return '#3a2a24';}
+// Inside the truck looking out: art and hit targets use the same 320 x 236 space.
+const COUNTER={grillX:49,grillY:164,slotW:53,grillH:57};
+function counterDog(id,x,y,scale){
+ g.save();g.translate(x,y+Math.round(Math.sin(T*2+x)*.7));g.scale(scale,scale);
+ g.drawImage(SPR[id][0],0,0);drawAcc(g,id,0,0,false);g.restore();
+}
 TP.draw=function(ph){
-  g.drawImage(cached('temple'+ph,c=>templeRoom(c,ph)),0,0);
-  const lp=lanternsDraw(g,ph);bowlDraw(g);
-  const list=[];
-  list.push({k:4+2+.5,f:()=>burnerDraw(g)});
-  list.push({k:0+4+.5,f:()=>stallsDraw(g,1)});
-  list.push({k:0+7+.5,f:()=>stallsDraw(g,2)});
-  const tk=TRUCK.x+TRUCK.y+TRUCK.w+TRUCK.d-1;
-  list.push({k:tk-1,f:()=>{truckDraw(g);if(TP.truckDX<1.5){const w=TP.winPos;const A={id:'a',x:0,y:0,dir:-1,state:'idle',t:1,icon:TP.aIcon,iconT:TP.aIconT};g.save();g.beginPath();g.rect(w[0]-17,w[1]-13,34,13);g.clip();
-    const spr=SPR.a[0];g.translate(Math.round(w[0]-17)*2+34,0);g.scale(-1,1);const ax=Math.round(w[0]-17),ay=Math.round(w[1]-21+(Math.sin(T*3)>.7?-1:0));g.drawImage(spr,ax,ay);drawAcc(g,'a',ax,ay,false);g.restore();
-    if(TP.aIconT>0)drawIconBubble(g,TP.aIcon,w[0]+4,w[1]-26);}
-    counterDraw(g);}});
-  for(const p of TP.q){list.push({k:p.x+p.y,f:()=>{if(p.state==='fly'){g.globalAlpha=clamp(1-p.fly/1.2,0,1);}
-    const r=drawPersonAt(g,p,p.x,p.y,p.dir,p.state==='in'||p.state==='leave',{lift:p.state==='fly'?p.fly*40:0});g.globalAlpha=1;
-    if(p.kind==='hunter'&&TP.reveal>0){g.globalAlpha=.6;rect(g,r[0]-1,r[1]-1,r[2]+2,1,'#ff3a2a');rect(g,r[0]-1,r[1]+r[3],r[2]+2,1,'#ff3a2a');rect(g,r[0]-1,r[1],1,r[3],'#ff3a2a');rect(g,r[0]+r[2],r[1],1,r[3],'#ff3a2a');g.globalAlpha=1;}
-    if(p.net>0){const k=Math.min(1,p.net),hx=r[0]+(p.dir>0?r[2]:0),hy=r[1]+10;const ex=hx+p.dir*(4+k*2),ey=hy-6-k*12;line(g,hx,hy,ex,ey,'#b3946b');ellPx(g,ex,ey-4,4,4,'#cfc6b4');ellPx(g,ex,ey-4,2.5,2.5,'rgba(0,0,0,0)');for(let i=-2;i<=2;i+=2)line(g,ex+i,ey-7,ex+i,ey-1,'#8a8070');
-      drawIconBubble(g,'excl',r[0]+r[2],r[1]-12);}
-    if(p.icon)drawIconBubble(g,p.icon,r[0]+r[2],r[1]-12);}});}
-  TP.dogs.forEach(d=>list.push({k:d.x+d.y+.6,f:()=>drawDogAt(g,d,false,0)}));
-  list.sort((a,b)=>a.k-b.k).forEach(i=>i.f());
-  if(TP.reveal>0){g.fillStyle='rgba(120,90,200,.12)';g.fillRect(0,0,W,H);}
-  const gl=[];lp.forEach(([x,y])=>gl.push([x,y,ph==='day'?10:22,'rgba(255,140,80,A)',ph==='night'?.4:ph==='evening'?.3:.1]));
-  if(TP.winPos&&TP.truckDX<1.5)gl.push([TP.winPos[0],TP.winPos[1]-12,40,'rgba(255,210,140,A)',ph==='night'?.35:.12]);
-  if(S.inv.sign){const q=P(TRUCK.x+TP.truckDX+TRUCK.w*.3,TRUCK.y+TRUCK.d,38);gl.push([q[0]+9,q[1]-4,26,'rgba(255,100,180,A)',ph==='day'?.12:.35]);}
-  {const q=P(4.5,2.5,14);gl.push([q[0],q[1],24,'rgba(255,170,90,A)',ph==='night'?.25:.08]);}
-  {const q=P(.95,6.2,18);gl.push([q[0],q[1],30,'rgba(255,170,90,A)',ph==='night'?.3:.1]);}
-  lighting(ph,gl);
+ const night=ph==='night',sky=night?'#44465f':ph==='evening'?'#e9bca0':'#c4ddd2';
+ rect(g,0,0,320,236,'#664638');rect(g,9,18,302,127,sky);
+ // A quiet lane and shopfronts beyond the service window.
+ rect(g,9,89,302,56,night?'#777775':'#b8b5a0');
+ for(let i=0;i<6;i++){
+  const x=14+i*52;rect(g,x,44,43,47,i%2?'#dfc8a6':'#c1c9b4');
+  rect(g,x-3,42,49,6,'#97765b');rect(g,x+9,56,24,20,night?'#f1ce87':'#829b98');
+  rect(g,x+20,56,2,20,'#e9ddba');rect(g,x+9,65,24,2,'#e9ddba');
+ }
+ for(let i=0;i<9;i++){rect(g,i*39+6,117,25,2,'#d3c8ad');rect(g,i*39+18,136,25,2,'#d3c8ad');}
+ // Customer positions derive from the original queue; no second queue or order system.
+ const waiting=TP.q.filter(p=>p.state==='in'||p.state==='queue');
+ waiting.slice(0,4).reverse().forEach(p=>{
+  const index=waiting.indexOf(p),atFront=index===0;
+  const target=SPOTS[Math.min(p.spot||0,SPOTS.length-1)];
+  const distance=Math.min(1,Math.hypot(p.x-target[0],p.y-target[1])/6);
+  const x=atFront?160+distance*120:69+(index-1)*87;
+  const scale=atFront?2:1.25,y=atFront?128:101;
+  const sprite=p.spr[p.state==='in'?Math.floor(T*7+p.seed)%2:0];
+  const sx=Math.round(x-sprite.width*scale/2),sy=Math.round(y-sprite.height*scale);
+  ellPx(g,x,y,atFront?15:10,3,'#8d8b78');g.drawImage(sprite,sx,sy,sprite.width*scale,sprite.height*scale);
+  if(p.kind==='hunter'&&(TP.reveal>0||p.net>0)){
+   if(TP.reveal>0){rect(g,sx-2,sy-2,sprite.width*scale+4,2,'#b44339');rect(g,sx-2,y,sprite.width*scale+4,2,'#b44339');rect(g,sx-2,sy,2,y-sy,'#b44339');rect(g,sx+sprite.width*scale,sy,2,y-sy,'#b44339');}
+   if(p.net>0){line(g,x+12,y-12,x+25,y-40,'#745239');ellPx(g,x+25,y-44,8,9,'#ddd5b9');for(let k=-5;k<=5;k+=3)line(g,x+25+k,y-51,x+25+k,y-37,'#817b6a');}
+  }
+ });
+ // Frame, striped awning, hanging lamps and the wood serving ledge.
+ rect(g,0,0,320,19,'#805441');for(let i=0;i<16;i++){
+  rect(g,i*20,4,20,17,i%2?'#f2e4c5':'#b87661');rect(g,i*20+1,21,18,4,i%2?'#ead7b3':'#a86554');}
+ rect(g,4,23,7,126,'#77513e');rect(g,309,23,7,126,'#77513e');
+ for(const x of [30,288]){line(g,x,25,x,38,'#76523b');rect(g,x-8,38,16,20,'#b77952');rect(g,x-6,40,12,15,'#f3d493');rect(g,x-3,42,2,11,'#fff1bf');}
+ rect(g,0,136,320,100,'#bc8c60');rect(g,0,136,320,6,'#f0cf99');rect(g,0,142,320,4,'#7b5138');
+ for(let y=151;y<236;y+=22){rect(g,0,y,320,1,'#a6764f');for(let x=10;x<320;x+=68)rect(g,x,y+8,36,1,'#c79a6c');}
+ // Three familiar companions, still wearing their purchased accessories.
+ counterDog('a',6,105,1.25);counterDog('b',268,105,1.25);counterDog('c',270,183,1.15);
+ // Ready-to-serve tray and condiments, drawn above the grill.
+ rect(g,115,143,91,17,'#815b43');rect(g,118,144,85,13,'#f5e7c9');
+ for(let i=0;i<Math.min(8,TP.stock);i++){rect(g,122+i*9,147,6,7,'#a84f32');rect(g,123+i*9,147,2,5,'#dc9760');}
+ for(const [x,col] of [[20,'#b7503c'],[283,'#c8a047']]){rect(g,x,157,12,25,col);rect(g,x+3,151,6,6,'#efe2be');rect(g,x+3,164,6,8,'#f4e7c9');}
+ // Large, direct-manipulation charcoal grill: four generous cooking positions.
+ rect(g,43,161,224,64,'#594c43');rect(g,45,163,220,59,'#a7a08c');
+ TP.slots.forEach((slot,i)=>{
+  const x=COUNTER.grillX+i*COUNTER.slotW;
+  rect(g,x,166,47,51,'#352f2d');
+  for(let k=0;k<6;k++){rect(g,x+3+k*7,171,4,36,TP.open?(k%2?'#96513b':'#c27c43'):'#59504a');}
+  for(let y=169;y<212;y+=6)rect(g,x+1,y,45,2,'#817a6a');
+  if(slot.on){
+   const col=sCol(slot.c);rect(g,x+17,174,13,29,'#53352c');rect(g,x+17,178,13,22,col);rect(g,x+19,174,9,30,col);
+   rect(g,x+19,179,2,19,slot.c>=burnAt()?'#59443a':'#e5a06d');
+   for(let k=0;k<3;k++)line(g,x+23,179+k*7,x+28,182+k*7,'#733c2e');
+   if(slot.c>=.85&&slot.c<burnAt()){rect(g,x,166,47,2,'#f5ce64');rect(g,x,215,47,2,'#f5ce64');}
+   if(TP.open){for(let k=0;k<2;k++){const t=(T*.6+k*.5+i*.17)%1;g.globalAlpha=(1-t)*.65;rect(g,x+19+Math.round(Math.sin(T*2+k)*3),169-t*18,3,5,slot.c>=burnAt()?'#64594e':'#fff0d2');}g.globalAlpha=1;}
+  }
+ });
+ rect(g,43,225,224,4,'#77523a');
+ if(TP.fled>0){g.fillStyle='rgba(243,225,193,.55)';g.fillRect(11,25,298,111);}
 };
 function tpSay(who,s){$('mTemple').innerHTML=who?'<b>'+who+'</b>：'+s:s;TP.msgT=6;}
 function aSay(s,icon){tpSay('阿柴',s);if(icon){TP.aIcon=icon;TP.aIconT=2;}}
@@ -1036,20 +1091,24 @@ function bbq(){if(S.money<200){aSay('還差 '+(200-S.money)+' 元……快～點
   aSay('去隔壁燒肉吃到飽，吃了 '+n+' 盤還說：「再來一盤！」','heart');save();}
 function grillTap(i){if(!TP.open){tpSay('','先按「開店」再烤香腸。');return;}const s=TP.slots[i];
   if(!s.on){if(S.raw<=0){aSay('沒有生香腸了！去商店街的肉舖買。快～點～！','anger');return;}S.raw--;s.on=true;s.c=0;}else if(s.c>=burnAt()){s.on=false;aSay('烤焦了！怎麼那麼慢！','anger');}else if(s.c>=.85){s.on=false;TP.stock++;}else tpSay('','還沒熟，再等一下。');syncTemple();}
-TP.tap=function(bx,by){const b=P(2.8,1.3,0);if(Math.abs(bx-b[0])<9&&Math.abs(by-b[1])<6){collectBowl();return;}
-  const d=TP.dogs[0],dp=P(d.x+.5,d.y+.5);if(Math.abs(bx-dp[0])<12&&by>dp[1]-22&&by<dp[1]+3){setIcon(d,'star',2);tpSay('小柴','塔搭！');return;}
-  const w=TP.winPos;if(w&&Math.abs(bx-w[0])<16&&by>w[1]-16&&by<w[1]+2){aSay(pick(['快～點～買香腸！','那沒什麼，我烤的最好吃。','今天也要賺錢去吃燒肉。']),'note');return;}
-  const s=P(.95,6.2,16);if(Math.abs(bx-s[0])<16&&Math.abs(by-s[1])<16){bbq();return;}
-  const f=front();if(f){const fp=P(f.x,f.y);if(Math.abs(bx-fp[0])<8&&by>fp[1]-28&&by<fp[1]+2){tpSay('',f.kind==='police'?'是警察！':'第一位客人在等香腸。');return;}}
-  const [gx,gy]=toGrid(bx,by);if(!TP.blocked(gx,gy))goTo(d,[[gx,gy]],TP.blocked);};
+TP.tap=function(bx,by){
+ if(by>=COUNTER.grillY&&by<=COUNTER.grillY+COUNTER.grillH&&bx>=COUNTER.grillX&&bx<COUNTER.grillX+4*COUNTER.slotW){grillTap(Math.floor((bx-COUNTER.grillX)/COUNTER.slotW));return;}
+ if(bx>=120&&bx<=200&&by>=45&&by<=136){sell();return;}
+ if(bx<49&&by>=100&&by<145){aSay('熟了就收起，再點客人出餐！','note');return;}
+ if(bx>265&&by>=180){setIcon(TP.dogs[0],'star',2);tpSay('小柴','塔搭！我也來幫忙顧攤。');}
+};
 function syncTemple(){const st=$('grills');
   if(!st.children.length){st.innerHTML=[0,1,2,3].map(i=>'<button class="grill" data-g="'+i+'"><i></i><span></span></button>').join('');st.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>grillTap(+b.dataset.g));}
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'熟了・收起':'烤焦・清掉';b.disabled=!TP.open;b.setAttribute('aria-label','烤架 '+(i+1)+'：'+b.querySelector('span').textContent);b.style.setProperty('--heat',Math.round(s.on?Math.min(1,s.c/.85)*100:0)+'%');});
-  $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
+  const customer=front(),order=$('customerOrder'),serve=$('counterCustomer');
+ serve.disabled=!TP.open||TP.fled>0||!customer;
+ order.textContent=!TP.open?'按右側「開店」開始':TP.fled>0?'餐車快閃中…':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':TP.stock>0?'香腸一條！點我出餐':'香腸一條，等你烤好！';
+ serve.setAttribute('aria-label',order.textContent);
+ $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
   $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
   const kl=Math.max(0,40-(T-TP.karaAt));$('bKara').disabled=kl>0||!TP.open;$('karaS').textContent=kl>0?'冷卻 '+Math.ceil(kl)+' 秒':'看穿獵人';
   ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bBBQ').disabled=S.money<200;
-  if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'歡迎來到小柴犬香腸攤！按「開店」，再點下方烤架放香腸。';}
+  if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'歡迎來到小柴犬香腸攤！按「開店」，再點畫面前方的烤架放香腸。';}
 
 // ======================================================================
 // SHOP STREET
@@ -1448,7 +1507,7 @@ const sceneInfo={
  home:{name:'柴犬的家',caption:'柴犬的家 · 一起慢慢過日子',hint:'點門口可走到研究室，也可以打開小地圖。'},
  lab:{name:'研究室',caption:'二柴的研究室 · 今天想做什麼發明？',hint:'點門口可走回柴犬的家，也可以打開小地圖。'},
  school:{name:'信義國小',caption:'信義國小 · 今天也一起學一點點',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'},
- temple:{name:'香腸攤 · 廟口',caption:'小柴犬烤香腸 · 今天也要香噴噴地開張',hint:'阿柴顧攤、小柴表演，二柴的發明幫忙！其他場景就在上方選單。'},
+ temple:{name:'香腸攤 · 廟口',caption:'小柴犬烤香腸 · 今天也要香噴噴地開張',hint:'點前方烤架放香腸、熟了收起，再點窗口客人出餐。' },
  shop:{name:'商店街',caption:'商店街 · 慢慢逛，喜歡再帶回家',hint:'想換個地方？小地圖和場景分頁都可以快速旅行。'}
 };
 const travelStatus=$('travelStatus'),mapToggle=$('mapToggle'),travelMap=$('travelMap'),doorLabel=$('doorLabel');
@@ -1505,11 +1564,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
 }});
 function showScene(s){
  if(!Object.prototype.hasOwnProperty.call(SC,s))return;
- cancelJourney();cur=s;setMap(false);
+ cancelJourney();cur=s;setMap(false);$('counterControls').hidden=s!=='temple';
  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));
  for(const k in SC)$('p-'+k).hidden=k!==s;
  $('sceneName').textContent=sceneInfo[s].name;$('sceneCaption').textContent=sceneInfo[s].caption;travelStatus.textContent=sceneInfo[s].hint;
- cv.setAttribute('aria-label',sceneInfo[s].caption+'；點空地移動，點家具互動');
+ cv.setAttribute('aria-label',sceneInfo[s].caption+(s==='temple'?'；餐車內視角，點前方烤架烤香腸，點窗口客人出餐':'；點空地移動，點家具互動'));
  document.querySelectorAll('[data-travel]').forEach(b=>{
   if(b.dataset.travel===s)b.setAttribute('aria-current','location');else b.removeAttribute('aria-current');
   b.querySelector('small').textContent=b.dataset.travel===s?'目前位置':placeHints[b.dataset.travel];
@@ -1529,7 +1588,7 @@ const chips=$('chips');[['a','阿柴','急性子・愛吃'],['b','二柴','發�
 $('bLamp').onclick=()=>{toggleLamp();$('mLab').textContent=S.lamp?'立燈打開了。':'立燈關掉了。';};
 $('bSleep').onclick=()=>{if(phase()!=='night')return;cancelJourney();S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
 $('bClass').onclick=startClass;$('bWake').onclick=wake;
-$('bSell').onclick=sell;$('bHit').onclick=hit;$('bFlee').onclick=flee;$('bKara').onclick=kara;$('bOpen').onclick=toggleOpen;$('bBowl').onclick=collectBowl;$('bBBQ').onclick=bbq;
+$('counterCustomer').onclick=sell;$('bSell').onclick=sell;$('bHit').onclick=hit;$('bFlee').onclick=flee;$('bKara').onclick=kara;$('bOpen').onclick=toggleOpen;$('bBowl').onclick=collectBowl;$('bBBQ').onclick=bbq;
 $('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';
 
 // ================= loop =================
