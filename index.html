@@ -383,6 +383,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .app[data-scene="temple"] .stall-dock{grid-template-columns:repeat(5,minmax(0,1fr))}
 .stall-dock #bGarlic[aria-pressed="true"]{background:#f6d779;color:#543719;border-color:#fff3bd;box-shadow:inset 0 0 0 2px #b68a3e,0 3px 0 #2e201a}
 @media(max-width:699px){.stall-dock .btn{font-size:13px}.stall-dock .btn small{font-size:10px}}
+#counterCustomer.topping-mismatch .order-card{border-color:#bd692d;box-shadow:0 3px 0 #bd692d}
 </style>
 </head>
 <body>
@@ -471,7 +472,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
     </div>
-    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸；未熟時可點一下看翻面動作，不需額外操作也會烤熟。熟度條滿了會亮起金框，顯示烤焦前的收起倒數，點一下送到出餐盤；烤焦時點一下清掉。「加蒜頭」按鈕可切換之後的出餐配料，不加價，會記住你的選擇。收起後點窗口前的客人出餐，也可使用「賣香腸」按鈕。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">點烤架放香腸；未熟時可點一下看翻面動作，不需額外操作也會烤熟。熟度條滿了會亮起金框，顯示烤焦前的收起倒數，點一下送到出餐盤；烤焦時點一下清掉。客人會指定「加蒜頭」或「不加蒜頭」。請按「加蒜頭」切換配料，符合訂單才會收錢；選錯不會扣香腸，調整後可再出餐，等待時間仍會繼續。配料不加價，會記住你的選擇。收起後點窗口前的客人出餐，也可使用「賣香腸」按鈕。柴犬獵人長得跟一般客人一樣，排到第一位會舉起網子，要在網子丟出來前按「反擊」。穿制服的是警察，按「快閃」讓小獵犬號開走。</p></details>
   </section>  <details class="daily-card"><summary>🐾 今日小目標 · 完成可領 30 元</summary><div class="daily-content">
     <div class="daily-head"><span class="daily-paw">🐾</span><div><strong>今日小目標</strong><small>完成一點點，今天就很棒了！</small></div><span class="daily-bonus">+30 元</span></div>
     <div class="daily-goals">
@@ -1368,7 +1369,7 @@ function customerPortrait(p){
 }
 function newCustomer(){const r=Math.random();let kind='normal';if(r<.14&&!TP.q.some(p=>p.kind==='police'))kind='police';else if(r<.42)kind='hunter';
   const spr=kind==='police'?[makePerson({shirt:'#26457a',pants:'#1a2f55',skin:pick(SKINS),hair:'#1d1a18',cap:'#1a2f55',badge:'#e3b23c'},0),makePerson({shirt:'#26457a',pants:'#1a2f55',skin:pick(SKINS),hair:'#1d1a18',cap:'#1a2f55',badge:'#e3b23c'},1)]:randPerson();
-  return {kind,spr,look:kind==='police'?null:nextCustomerLook(),x:9.8,y:8.6,dir:-1,state:'in',wait:0,net:0,fly:0,seed:Math.random()*5,patience:rnd(9,13),icon:null};}
+  return {kind,spr,wantsGarlic:kind==='police'?null:Math.random()<.5,look:kind==='police'?null:nextCustomerLook(),x:9.8,y:8.6,dir:-1,state:'in',wait:0,net:0,fly:0,seed:Math.random()*5,patience:rnd(9,13),icon:null};}
 function front(){const p=TP.q.find(p=>p.state==='in'||p.state==='queue'||p.state==='serving');return p&&p.state==='queue'&&p.spot===0?p:null;}
 TP.update=function(dt){
  for(let i=stallFx.length-1;i>=0;i--){stallFx[i].t+=dt;if(stallFx[i].t>=stallFx[i].d)stallFx.splice(i,1);}
@@ -1405,6 +1406,7 @@ function sell(){if(TP.fled>0)return;const f=front();if(!TP.open){tpSay('','還�
   if(f.kind==='police'){aSay('警察不是來買香腸的，快閃啦！','excl');return;}
   if(TP.stock<=0){aSay('沒有烤好的香腸了！快～點～烤！','anger');return;}
   if(f.kind==='hunter'&&f.net>0){aSay('他拿出網子了，還賣什麼！快反擊！','excl');return;}
+  if(S.garlic!==(f.wantsGarlic===true)){tpSay('客人','我要'+(f.wantsGarlic?'加蒜頭':'不加蒜頭')+'！請先切換「加蒜頭」再出餐。');syncTemple();return;}
   TP.stock--;const tip=Math.random()<.3?5:0;S.money+=35+tip;S.sold++;S.soldToday++;f.garlic=S.garlic;f.state='serving';f.serveT=.75;f.icon='heart';stallEffect('sale',0,35+tip);syncTemple();
   if(f.kind==='hunter')aSay('賣出去了……那個客人一直盯著我看，好可疑。','q');else aSay(pick(['一條 35 元，謝謝光臨！','那沒什麼，我烤的香腸最好吃。','下次再來！'])+(f.garlic?'（附上蒜頭）':'（不加蒜頭）')+(tip?'（客人多給了 5 元小費）':''),'coin');save();}
 function hit(){const f=front();if(!TP.open||TP.fled>0)return;if(!f){aSay('香腸發射器空射一發。那沒什麼，試射啦。');return;}
@@ -1442,8 +1444,10 @@ function syncTemple(){const st=$('grills');
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls+(s.on&&s.c>=.85&&s.c<burnAt()&&(burnAt()-s.c)*7<=1.5?' urgent':'');b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'熟了・收起 '+Math.max(1,Math.ceil((burnAt()-s.c)*7))+'秒':'烤焦・清掉';b.querySelector('span').dataset.short=!s.on?'放香腸':s.c<.85?'烤'+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'收起\n'+Math.max(1,Math.ceil((burnAt()-s.c)*7))+'秒':'清掉';b.disabled=!TP.open||TP.fled>0;b.setAttribute('aria-label','烤架 '+(i+1)+'：'+b.querySelector('span').textContent);b.style.setProperty('--heat',Math.round(s.on?Math.min(1,s.c/.85)*100:0)+'%');});
   const serving=TP.q.some(p=>p.state==='serving'),customer=front(),order=$('customerOrder'),serve=$('counterCustomer');
  serve.disabled=!TP.open||TP.fled>0||!customer;
- order.textContent=!TP.open?'按攤位上的「開店」開始':TP.fled>0?'餐車快閃中…':serving?'謝謝招待！':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':TP.stock>0?'香腸一條！點我出餐':'香腸一條，等你烤好！';
- serve.setAttribute('aria-label',order.textContent);
+ order.textContent=!TP.open?'按攤位上的「開店」開始':TP.fled>0?'餐車快閃中…':serving?'謝謝招待！':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':'一條・'+(customer.wantsGarlic?'加蒜頭':'不加蒜頭');
+ const buying=customer&&customer.kind!=='police'&&!(customer.kind==='hunter'&&customer.net>0);
+ serve.classList.toggle('topping-mismatch',!!buying&&S.garlic!==(customer.wantsGarlic===true));
+ serve.setAttribute('aria-label',order.textContent+'，點我出餐');
  const patience=$('customerPatience');patience.hidden=!customer||customer.kind!=='normal'||TP.fled>0;
  if(!patience.hidden){const remaining=clamp(1-(customer.fw||0)/customer.patience,0,1);patience.firstElementChild.style.width=remaining*100+'%';patience.firstElementChild.style.background=remaining<.3?'#bc513d':'#6f954e';serve.setAttribute('aria-label',order.textContent+'，等待剩餘 '+Math.ceil(remaining*100)+'%');}
  $('nextCustomer').hidden=TP.q.filter(p=>p.state==='in'||p.state==='queue'||p.state==='serving').length<2||TP.fled>0;
@@ -1934,7 +1938,7 @@ const chips=$('chips');[['a','阿柴','急性子・愛吃'],['b','二柴','發�
 $('bLamp').onclick=()=>{toggleLamp();$('mLab').textContent=S.lamp?'立燈打開了。':'立燈關掉了。';};
 $('bSleep').onclick=()=>{if(phase()!=='night')return;cancelJourney();S.day++;S.min=7*60;S.soldToday=0;LAB.dogs.forEach(d=>{d.state='sleep';d.actT=3;setIcon(d,'z',3);});labSay('a','（夢話）再來一盤……要吃燒肉……');setTimeout(()=>labSay('a','早安！快～點～，今天要上學！'),2600);save();};
 $('bClass').onclick=startClass;$('bWake').onclick=wake;
-$('bGarlic').onclick=()=>{S.garlic=!S.garlic;syncTemple();tpSay('',S.garlic?'之後出餐會附蒜頭，不加價。':'之後出餐不加蒜頭。');save();};
+$('bGarlic').onclick=()=>{S.garlic=!S.garlic;syncTemple();tpSay('',S.garlic?'目前選擇：加蒜頭。請確認與客人訂單相同。':'目前選擇：不加蒜頭。請確認與客人訂單相同。');save();};
 $('counterCustomer').onclick=sell;$('bSell').onclick=sell;$('bHit').onclick=hit;$('bFlee').onclick=flee;$('bKara').onclick=kara;$('bOpen').onclick=toggleOpen;$('bBowl').onclick=collectBowl;$('bBBQ').onclick=bbq;
 $('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';
 
