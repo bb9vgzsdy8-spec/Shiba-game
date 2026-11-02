@@ -276,6 +276,13 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
  #p-temple .stall-primary .btn{font-size:15px;padding:5px 2px;min-height:52px}
  #p-temple .stall-primary .btn small{font-size:13px}
 }
+/* Visual polish only: preserve the tested control positions and hit areas. */
+.app[data-scene="temple"] .stage{border-color:#fff5e2;box-shadow:0 8px 22px rgba(94,62,36,.18),0 2px 0 #d3b68b}
+.counter-sign{border-color:#986e4b;box-shadow:0 2px 0 #9d7553,inset 0 0 0 2px #f4ddb7;letter-spacing:.02em}
+#customerOrder{box-shadow:0 3px 0 #b99a6b;position:relative}
+#customerOrder::after{content:'';position:absolute;left:calc(50% - 4px);bottom:-7px;width:9px;height:9px;background:#fff8df;border-right:2px solid #9e7655;border-bottom:2px solid #9e7655;transform:rotate(45deg)}
+#counterControls #grills .grill span{box-shadow:0 1px 0 #a78459}
+#p-temple{border-color:#d9bf9d;box-shadow:0 3px 0 rgba(126,91,53,.07)}
 </style>
 </head>
 <body>
@@ -1024,14 +1031,31 @@ function counterDog(id,x,y,scale){
 TP.draw=function(ph){
  const night=ph==='night',sky=night?'#44465f':ph==='evening'?'#e9bca0':'#c4ddd2';
  rect(g,0,0,320,236,'#664638');rect(g,9,18,302,127,sky);
- // A quiet lane and shopfronts beyond the service window.
+ // Layered little storefronts and a paved lane; all decoration stays behind customers.
  rect(g,9,89,302,56,night?'#777775':'#b8b5a0');
- for(let i=0;i<6;i++){
-  const x=14+i*52;rect(g,x,44,43,47,i%2?'#dfc8a6':'#c1c9b4');
-  rect(g,x-3,42,49,6,'#97765b');rect(g,x+9,56,24,20,night?'#f1ce87':'#829b98');
-  rect(g,x+20,56,2,20,'#e9ddba');rect(g,x+9,65,24,2,'#e9ddba');
+ for(let row=0;row<5;row++)for(let col=0;col<11;col++){
+  const x=col*32+(row%2?16:0),y=94+row*10;
+  rect(g,x,y,30,8,night?'#6b706e':(row+col)%3?'#c4bfaa':'#d2c9b2');rect(g,x+2,y,26,1,night?'#85857a':'#e0d5bc');
  }
- for(let i=0;i<9;i++){rect(g,i*39+6,117,25,2,'#d3c8ad');rect(g,i*39+18,136,25,2,'#d3c8ad');}
+ for(let i=0;i<6;i++){
+  const x=14+i*52,roof=i%2?'#81958b':'#a88575';
+  rect(g,x,43,43,47,i%2?'#ded0b3':'#becbbd');
+  rect(g,x,46,3,44,'#aab8a7');rect(g,x+3,45,39,2,'#eee3c7');
+  rect(g,x-3,39,49,7,roof);for(let k=0;k<7;k++)rect(g,x+k*7-2,41,5,1,'#c3b7a1');
+  rect(g,x+7,53,28,29,'#927f67');rect(g,x+9,55,24,25,night?'#e4bc78':'#8fa9a0');
+  rect(g,x+10,56,3,17,night?'#f8dc97':'#c6d9c5');
+  rect(g,x+20,55,2,25,'#eee2c4');rect(g,x+9,66,24,2,'#eee2c4');
+  rect(g,x+5,81,32,3,'#9d876e');rect(g,x+6,81,30,1,'#e5ceaa');
+  for(let k=0;k<6;k++){rect(g,x+4+k*6,48,6,4,k%2?'#f0dfb8':i%2?'#8fa89a':'#be9680');}
+  // Window boxes with leaves and small cream blossoms.
+  rect(g,x+7,85,28,5,'#b18b68');rect(g,x+8,85,26,1,'#d5b48a');
+  for(let k=0;k<5;k++){const px=x+10+k*5;rect(g,px,82-(k%2),3,4,'#7d9771');rect(g,px+1,81,2,2,k%2?'#edcf9d':'#a8b78c');}
+ }
+ // Corner foliage frames the view without covering the serving window.
+ for(const x of [15,302]){
+  rect(g,x-5,94,11,12,'#aa8062');rect(g,x-6,93,13,3,'#d2a77e');
+  for(let k=0;k<5;k++)ellPx(g,x+Math.sin(k*2)*6,87-k*2,5,4,k%2?'#809b79':'#a4b58c');
+ }
  // Customer positions derive from the original queue; no second queue or order system.
  const waiting=TP.q.filter(p=>p.state==='in'||p.state==='queue');
  waiting.slice(0,4).reverse().forEach(p=>{
@@ -1050,27 +1074,50 @@ TP.draw=function(ph){
  });
  // Frame, striped awning, hanging lamps and the wood serving ledge.
  rect(g,0,0,320,19,'#805441');for(let i=0;i<16;i++){
-  rect(g,i*20,4,20,17,i%2?'#f2e4c5':'#b87661');rect(g,i*20+1,21,18,4,i%2?'#ead7b3':'#a86554');}
+  rect(g,i*20,4,20,17,i%2?'#f2e4c5':'#b87661');
+  rect(g,i*20+1,5,3,15,i%2?'#fff0d3':'#d2977b');rect(g,i*20+17,5,3,16,i%2?'#dbcaac':'#9f6252');
+  rect(g,i*20+1,21,18,3,i%2?'#ead7b3':'#a86554');rect(g,i*20+3,24,14,2,i%2?'#d9c5a4':'#945e4e');}
  rect(g,4,23,7,126,'#77513e');rect(g,309,23,7,126,'#77513e');
- for(const x of [30,288]){line(g,x,25,x,38,'#76523b');rect(g,x-8,38,16,20,'#b77952');rect(g,x-6,40,12,15,'#f3d493');rect(g,x-3,42,2,11,'#fff1bf');}
+ for(const x of [30,288]){line(g,x,25,x,38,'#76523b');
+  if(night){g.globalAlpha=.12;ellPx(g,x,49,16,22,'#ffe2a1');g.globalAlpha=1;}rect(g,x-8,38,16,20,'#b77952');rect(g,x-6,40,12,15,'#f3d493');rect(g,x-3,42,2,11,'#fff1bf');rect(g,x-9,37,18,2,'#79513d');rect(g,x-8,57,16,2,'#815740');
+  rect(g,x+4,41,1,14,'#ce9d60');rect(g,x-5,47,10,1,'#e8bc7a');}
+ // A modest string of warm bulbs, kept clear of the order bubble.
+ for(let i=0;i<9;i++){const x=48+i*28,y=29+Math.round(Math.sin(i/8*Math.PI)*5);if(i<8)line(g,x,y,x+28,29+Math.round(Math.sin((i+1)/8*Math.PI)*5),'#8f795f');rect(g,x-1,y+2,3,3,night?'#ffe6a7':'#f5dfb1');px(g,x,y+2,'#fff5d7');}
  rect(g,0,136,320,100,'#bc8c60');rect(g,0,136,320,6,'#f0cf99');rect(g,0,142,320,4,'#7b5138');
- for(let y=151;y<236;y+=22){rect(g,0,y,320,1,'#a6764f');for(let x=10;x<320;x+=68)rect(g,x,y+8,36,1,'#c79a6c');}
+ for(let y=151;y<236;y+=22){
+  rect(g,0,y,320,1,'#9d704e');rect(g,0,y+1,320,1,'#d1a577');
+  for(let x=10;x<320;x+=68){const offset=Math.floor(hash(x+y)*9);rect(g,x+offset,y+8,36,1,'#cfa072');rect(g,x+offset+6,y+11,20,1,'#ad7e55');}
+ }
+ for(let i=0;i<22;i++){const x=5+Math.floor(hash(i+50)*309),y=149+Math.floor(hash(i+80)*84);rect(g,x,y,2,1,'#dfb588');}
+ for(const x of [8,310])for(const y of [139,230]){rect(g,x,y,2,2,'#926746');px(g,x,y,'#e1bb85');}
+ // Soft contact shadows keep the plush dogs grounded on the counter.
+ ellPx(g,28,138,19,2,'#b98e62');ellPx(g,288,138,19,2,'#b98e62');ellPx(g,290,215,17,2,'#a87a52');
  // Three familiar companions, still wearing their purchased accessories.
  counterDog('a',6,105,1.25);counterDog('b',268,105,1.25);counterDog('c',270,183,1.15);
  // Ready-to-serve tray and condiments, drawn above the grill.
- rect(g,115,143,91,17,'#815b43');rect(g,118,144,85,13,'#f5e7c9');
+ rect(g,115,143,91,17,'#815b43');rect(g,118,144,85,13,'#f5e7c9');rect(g,120,146,81,9,'#e9d8b4');rect(g,118,144,85,1,'#fff2d5');
+ for(let k=0;k<13;k++)rect(g,121+k*6,147,2,7,'#f6e9cb');
+ // A folded tea towel beside the tray.
+ rect(g,78,147,27,10,'#ece2c8');for(let k=0;k<4;k++)rect(g,80+k*6,147,2,10,'#91a99a');rect(g,78,155,27,2,'#c8c7ab');
  for(let i=0;i<Math.min(8,TP.stock);i++){rect(g,122+i*9,147,6,7,'#a84f32');rect(g,123+i*9,147,2,5,'#dc9760');}
- for(const [x,col] of [[20,'#b7503c'],[283,'#c8a047']]){rect(g,x,157,12,25,col);rect(g,x+3,151,6,6,'#efe2be');rect(g,x+3,164,6,8,'#f4e7c9');}
+ for(const [x,col] of [[20,'#b7503c'],[283,'#c8a047']]){rect(g,x,157,12,25,col);rect(g,x+3,151,6,6,'#efe2be');rect(g,x+3,164,6,8,'#f4e7c9');rect(g,x+1,159,2,19,'#e4bd8e');rect(g,x+4,166,4,1,'#a67e56');}
  // Large, direct-manipulation charcoal grill: four generous cooking positions.
- rect(g,43,161,224,64,'#594c43');rect(g,45,163,220,59,'#a7a08c');
+ rect(g,43,161,224,64,'#594c43');rect(g,45,163,220,59,'#a7a08c');rect(g,45,163,220,2,'#ded6bd');rect(g,45,220,220,2,'#757365');
+ for(const x of [46,262])for(const y of [164,219]){px(g,x,y,'#f6edd1');px(g,x+1,y+1,'#5e5c52');}
  TP.slots.forEach((slot,i)=>{
   const x=COUNTER.grillX+i*COUNTER.slotW;
   rect(g,x,166,47,51,'#352f2d');
-  for(let k=0;k<6;k++){rect(g,x+3+k*7,171,4,36,TP.open?(k%2?'#96513b':'#c27c43'):'#59504a');}
-  for(let y=169;y<212;y+=6)rect(g,x+1,y,45,2,'#817a6a');
+  for(let row=0;row<5;row++)for(let k=0;k<5;k++){
+   const cx=x+3+k*8,cy=171+row*8;
+   rect(g,cx,cy,6,6,TP.open?'#714439':'#4e4943');
+   rect(g,cx+1,cy+1,4,3,TP.open?((k+row+i+Math.floor(T*1.8))%4===0?'#d98c4e':'#97543b'):'#645e52');
+  }
+  for(let y=169;y<212;y+=6){rect(g,x+1,y,45,2,'#706d61');rect(g,x+1,y,45,1,'#aaa38e');}
   if(slot.on){
    const col=sCol(slot.c);rect(g,x+17,174,13,29,'#53352c');rect(g,x+17,178,13,22,col);rect(g,x+19,174,9,30,col);
    rect(g,x+19,179,2,19,slot.c>=burnAt()?'#59443a':'#e5a06d');
+   if(slot.c<burnAt()){rect(g,x+20,177,3,2,'#f7c599');px(g,x+21,184,'#f6d4a1');rect(g,x+26,188,2,8,'#965338');}
+   rect(g,x+21,173,5,1,slot.c>=burnAt()?'#59443a':'#b66d4c');
    for(let k=0;k<3;k++)line(g,x+23,179+k*7,x+28,182+k*7,'#733c2e');
    if(slot.c>=.85&&slot.c<burnAt()){rect(g,x,166,47,2,'#f5ce64');rect(g,x,215,47,2,'#f5ce64');}
    if(TP.open){for(let k=0;k<2;k++){const t=(T*.6+k*.5+i*.17)%1;g.globalAlpha=(1-t)*.65;rect(g,x+19+Math.round(Math.sin(T*2+k)*3),169-t*18,3,5,slot.c>=burnAt()?'#64594e':'#fff0d2');}g.globalAlpha=1;}
