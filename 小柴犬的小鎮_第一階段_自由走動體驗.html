@@ -384,6 +384,8 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .stall-dock #bGarlic[aria-pressed="true"]{background:#f6d779;color:#543719;border-color:#fff3bd;box-shadow:inset 0 0 0 2px #b68a3e,0 3px 0 #2e201a}
 @media(max-width:699px){.stall-dock .btn{font-size:13px}.stall-dock .btn small{font-size:10px}}
 #counterCustomer.topping-mismatch .order-card{border-color:#bd692d;box-shadow:0 3px 0 #bd692d}
+#stallFeedback{position:absolute;bottom:0;left:0;right:0;z-index:5;padding:7px 12px;background:rgba(53,34,22,.94);color:#fff5dd;text-align:center;font-size:14px;line-height:1.4;pointer-events:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:699px){#stallFeedback{font-size:12px;padding:4px 6px;line-height:1.3}}
 </style>
 </head>
 <body>
@@ -417,6 +419,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <div class="stage">
     <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button>
       <div id="counterControls" hidden>
+        <span id="stallFeedback" role="status" aria-live="polite" hidden></span>
         <span id="artStatus" class="art-status" role="status">插畫載入中…</span>
         <span id="nextCustomer" class="next-order" hidden>排隊中</span>
         <span id="plateStock" class="plate-stock">出餐盤 · 0 條</span>
@@ -1349,7 +1352,9 @@ function drawIllustratedTemple(ph){
 }
 
 const pixelTempleDraw=TP.draw;TP.draw=function(ph){if(TEMPLE_ART.ready)drawIllustratedTemple(ph);else pixelTempleDraw(ph);};
-function tpSay(who,s){$('mTemple').innerHTML=who?'<b>'+who+'</b>：'+s:s;TP.msgT=6;}
+let stallFeedbackTimer;
+function showStallFeedback(message){const el=$('stallFeedback');el.textContent=message;el.hidden=false;clearTimeout(stallFeedbackTimer);stallFeedbackTimer=setTimeout(()=>{el.hidden=true;},4500);}
+function tpSay(who,s){showStallFeedback(s);$('mTemple').innerHTML=who?'<b>'+who+'</b>：'+s:s;TP.msgT=6;}
 function aSay(s,icon){tpSay('阿柴',s);if(icon){TP.aIcon=icon;TP.aIconT=2;}}
 // Appearance is independent of customer behavior; hunters share the full roster.
 const CUSTOMER_NAMES=['鄰家女孩','街坊大哥','親切婆婆','散步爺爺','大學生','上班族','運動女孩','旅人'];
@@ -1402,7 +1407,7 @@ TP.update=function(dt){
 };
 function hunterSteal(p){p.state='leave';p.net=0;const lost=Math.min(S.money,40);S.money-=lost;if(TP.stock>0)TP.stock--;S.hunterMiss=(S.hunterMiss||0)+1;
   aSay('柴犬獵人丟網子！阿柴掙脫了，但被搶走 '+lost+' 元和一條香腸。哩洗咧跨三小！','anger');save();}
-function sell(){if(TP.fled>0)return;const f=front();if(!TP.open){tpSay('','還沒開店。先按攤位上的「開店」。');return;}if(!f){tpSay('','還沒有客人排到窗口。');return;}
+function sell(){if(TP.fled>0){tpSay('','快閃中，回到攤位後才能出餐。');return;}if(TP.q.some(p=>p.state==='serving')){tpSay('','這份已經送出，請等下一位客人走到窗口。');return;}const f=front();if(!TP.open){tpSay('','還沒開店。先按攤位上的「開店」。');return;}if(!f){tpSay('','還沒有客人排到窗口。');return;}
   if(f.kind==='police'){aSay('警察不是來買香腸的，快閃啦！','excl');return;}
   if(TP.stock<=0){aSay('沒有烤好的香腸了！快～點～烤！','anger');return;}
   if(f.kind==='hunter'&&f.net>0){aSay('他拿出網子了，還賣什麼！快反擊！','excl');return;}
@@ -1443,7 +1448,7 @@ function syncTemple(){const st=$('grills');
   if(!st.children.length){st.innerHTML=[0,1,2,3].map(i=>'<button class="grill" data-g="'+i+'"><i></i><span></span></button>').join('');st.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>grillTap(+b.dataset.g));}
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls+(s.on&&s.c>=.85&&s.c<burnAt()&&(burnAt()-s.c)*7<=1.5?' urgent':'');b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'熟了・收起 '+Math.max(1,Math.ceil((burnAt()-s.c)*7))+'秒':'烤焦・清掉';b.querySelector('span').dataset.short=!s.on?'放香腸':s.c<.85?'烤'+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'收起\n'+Math.max(1,Math.ceil((burnAt()-s.c)*7))+'秒':'清掉';b.disabled=!TP.open||TP.fled>0;b.setAttribute('aria-label','烤架 '+(i+1)+'：'+b.querySelector('span').textContent);b.style.setProperty('--heat',Math.round(s.on?Math.min(1,s.c/.85)*100:0)+'%');});
   const serving=TP.q.some(p=>p.state==='serving'),customer=front(),order=$('customerOrder'),serve=$('counterCustomer');
- serve.disabled=!TP.open||TP.fled>0||!customer;
+ serve.disabled=false;
  order.textContent=!TP.open?'按攤位上的「開店」開始':TP.fled>0?'餐車快閃中…':serving?'謝謝招待！':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':'一條・'+(customer.wantsGarlic?'加蒜頭':'不加蒜頭');
  const buying=customer&&customer.kind!=='police'&&!(customer.kind==='hunter'&&customer.net>0);
  serve.classList.toggle('topping-mismatch',!!buying&&S.garlic!==(customer.wantsGarlic===true));
@@ -1453,11 +1458,11 @@ function syncTemple(){const st=$('grills');
  $('nextCustomer').hidden=TP.q.filter(p=>p.state==='in'||p.state==='queue'||p.state==='serving').length<2||TP.fled>0;
  $('plateStock').textContent='出餐盤 · '+TP.stock+' 條';
  $('bGarlic').setAttribute('aria-pressed',String(S.garlic));$('garlicStatus').textContent=S.garlic?'已開啟':'不加';
- $('bSell').querySelector('small').textContent='每條 35 元 · '+(S.garlic?'加蒜頭':'不加蒜頭');
+ $('bSell').querySelector('small').textContent=!TP.open?'請先開店':TP.fled>0?'快閃中':serving?'已送出・等下一位':!customer?'等客人走近':customer.kind==='police'?'警察來了・快閃':customer.kind==='hunter'&&customer.net>0?'獵人來了・反擊':TP.stock<=0?'請先烤好收起':S.garlic!==(customer.wantsGarlic===true)?'請選'+(customer.wantsGarlic?'加蒜頭':'不加蒜頭'):'可以出餐・35 元';
  $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
   $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
   const kl=Math.max(0,40-(T-TP.karaAt));$('bKara').disabled=kl>0||!TP.open;$('karaS').textContent=kl>0?'冷卻 '+Math.ceil(kl)+' 秒':'看穿獵人';
-  ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bSell').disabled=!TP.open||TP.fled>0||serving;$('bBBQ').disabled=S.money<200;
+  ['bSell','bHit','bFlee'].forEach(id=>$(id).disabled=!TP.open||TP.fled>0);$('bSell').disabled=false;$('bBBQ').disabled=S.money<200;
   if(TP.msgT<=0&&!TP.open)$('mTemple').textContent=phase()==='night'?'廟口夜市好熱鬧，燈籠都亮了。按「開店」開始賣香腸。':'歡迎來到小柴犬香腸攤！按「開店」，再點畫面前方的烤架放香腸。';}
 
 // ======================================================================
