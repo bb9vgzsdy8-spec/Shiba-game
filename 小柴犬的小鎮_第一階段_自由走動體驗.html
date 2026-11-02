@@ -247,6 +247,35 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #counterControls #grills .grill:disabled span{background:#dfd4be}
 #counterControls #grills .grill:hover:not(:disabled){border-color:#fbe8b5}
 @media(max-width:520px){.counter-sign{font-size:12px;padding:1px}#customerOrder{padding:2px 3px;font-size:14px}#counterCustomer{left:29%;width:42%}#counterControls #grills .grill{padding:0 1px 8px}#counterControls #grills .grill span{padding:1px;font-size:14px}}
+/* Cooking controls sit directly below the scene, in the player's line of sight. */
+.app[data-scene="temple"]{max-width:1000px}
+.app[data-scene="temple"]>.tabs{display:none}
+.app[data-scene="temple"] .workspace{display:flex;flex-direction:column;gap:8px}
+.app[data-scene="temple"] .play-area{flex:1;min-height:0;margin:0 auto;width:100%;max-width:none}
+.app[data-scene="temple"] .stage-caption,.app[data-scene="temple"] .travel-status,.app[data-scene="temple"] .stall-guide{display:none}
+.app[data-scene="temple"] .controls{flex:none;overflow:visible;padding:0;gap:4px}
+#p-temple{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+#p-temple .stall-primary{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#p-temple .stall-primary .btn{min-height:52px;font-size:17px;padding:6px}
+#p-temple .stall-primary .btn small{font-size:14px}
+#p-temple .msg{font-size:14px;line-height:1.4;padding:6px}
+#p-temple .stats{align-content:center;font-size:14px;gap:4px 12px}
+#p-temple .stall-secondary{grid-template-columns:repeat(3,minmax(0,1fr))}
+#p-temple .stall-secondary .btn{font-size:14px;padding:5px}
+#p-temple .instructions{align-self:center}
+.app[data-scene="temple"] .daily-card{padding:0 8px;box-shadow:none}
+@media(min-width:900px) and (min-height:600px){
+ .app[data-scene="temple"] .stage{max-width:calc((100vh - 350px) * 320 / 236);max-width:calc((100dvh - 350px) * 320 / 236)}
+ .app[data-scene="temple"] .travel-map:not([hidden]) ~ .workspace .stage{max-width:calc((100vh - 420px) * 320 / 236);max-width:calc((100dvh - 420px) * 320 / 236)}
+ .app[data-scene="temple"] .instructions .hint,.app[data-scene="temple"] .daily-content{max-height:110px;overflow:auto}
+}
+@media(max-width:899px),(max-height:599px){
+ .app[data-scene="temple"] .stage{max-width:600px}
+ #p-temple{grid-template-columns:1fr}
+ #p-temple .stall-primary{position:sticky;bottom:8px;z-index:3;background:var(--panel);padding:6px;border:1px solid var(--line);border-radius:12px;order:10}
+ #p-temple .stall-primary .btn{font-size:15px;padding:5px 2px;min-height:52px}
+ #p-temple .stall-primary .btn small{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -280,7 +309,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <div class="stage">
     <div class="stage-screen"><canvas id="cv" width="320" height="236" tabindex="0" aria-label="等角像素風遊戲畫面"></canvas><button type="button" class="door-label" id="doorLabel" hidden></button>
       <div id="counterControls" hidden>
-        <button type="button" id="counterCustomer" aria-label="點第一位客人出餐"><span id="customerOrder">按右側「開店」開始</span></button>
+        <button type="button" id="counterCustomer" aria-label="點第一位客人出餐"><span id="customerOrder">按下方「開店」開始</span></button>
         <div class="g4" id="grills" aria-label="餐車前方四個香腸烤架"></div>
         <span class="counter-sign">小柴犬炭烤香腸 · 每條 35 元</span>
       </div></div>
@@ -321,12 +350,12 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
   <section class="panel" id="p-temple" hidden>
     <p class="stall-guide">① 開店 → ② 點畫面烤架 → ③ 點客人出餐</p>
-    <div class="g2 stall-primary"><button class="btn good" id="bOpen">開店</button><button class="btn" id="bSell">賣香腸<small>每條 35 元 · 給第一位客人</small></button></div>
+    <div class="g2 stall-primary"><button class="btn good" id="bOpen">開店</button><button class="btn" id="bSell">賣香腸<small>每條 35 元 · 給第一位客人</small></button><button class="btn red" id="bHit">反擊<small>打跑獵人</small></button><button class="btn ghost" id="bFlee">快閃<small>躲警察</small></button></div>
     <div class="msg" id="mTemple" role="status"></div>
     <div class="stats"><span>生香腸 <b id="tRaw">0</b></span><span>烤好的 <b id="tStock">0</b></span><span>碗裡 <b id="tBowl">0</b> 元</span><span>今天賣出 <b id="tSold">0</b> 條</span></div>
     <div class="g3 stall-secondary">
-      <button class="btn red" id="bHit">反擊<small>打跑獵人</small></button>
-      <button class="btn ghost" id="bFlee">快閃<small>躲警察</small></button>
+
+
       <button class="btn violet" id="bKara">卡拉<small id="karaS">看穿獵人</small></button>
       <button class="btn ghost" id="bBowl">收碗裡的錢</button>
       <button class="btn blue" id="bBBQ">燒肉吃到飽<small>200 元</small></button>
@@ -1117,7 +1146,7 @@ function syncTemple(){const st=$('grills');
   TP.slots.forEach((s,i)=>{const b=st.children[i];const cls=!s.on?'':s.c<.5?'raw':s.c<.85?'cook':s.c<burnAt()?'ready':'burnt';b.className='grill '+cls;b.querySelector('span').textContent=!s.on?'放香腸':s.c<.85?'烤 '+Math.floor(s.c/.85*100)+'%':s.c<burnAt()?'熟了・收起':'烤焦・清掉';b.disabled=!TP.open;b.setAttribute('aria-label','烤架 '+(i+1)+'：'+b.querySelector('span').textContent);b.style.setProperty('--heat',Math.round(s.on?Math.min(1,s.c/.85)*100:0)+'%');});
   const customer=front(),order=$('customerOrder'),serve=$('counterCustomer');
  serve.disabled=!TP.open||TP.fled>0||!customer;
- order.textContent=!TP.open?'按右側「開店」開始':TP.fled>0?'餐車快閃中…':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':TP.stock>0?'香腸一條！點我出餐':'香腸一條，等你烤好！';
+ order.textContent=!TP.open?'按下方「開店」開始':TP.fled>0?'餐車快閃中…':!customer?'等客人走到窗口…':customer.kind==='police'?'警察來了！按「快閃」':customer.kind==='hunter'&&customer.net>0?'拿出網子了！按「反擊」':TP.stock>0?'香腸一條！點我出餐':'香腸一條，等你烤好！';
  serve.setAttribute('aria-label',order.textContent);
  $('tStock').textContent=TP.stock;$('tRaw').textContent=S.raw;$('tBowl').textContent=S.bowl;$('tSold').textContent=S.soldToday;
   $('bOpen').textContent=TP.open?'收攤':'開店';$('bOpen').className='btn '+(TP.open?'ghost':'good');
@@ -1579,7 +1608,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
 }});
 function showScene(s){
  if(!Object.prototype.hasOwnProperty.call(SC,s))return;
- cancelJourney();cur=s;setMap(false);$('counterControls').hidden=s!=='temple';
+ cancelJourney();cur=s;document.querySelector('.app').dataset.scene=s;setMap(false);$('counterControls').hidden=s!=='temple';
  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===s?'true':'false'));
  for(const k in SC)$('p-'+k).hidden=k!==s;
  $('sceneName').textContent=sceneInfo[s].name;$('sceneCaption').textContent=sceneInfo[s].caption;travelStatus.textContent=sceneInfo[s].hint;
