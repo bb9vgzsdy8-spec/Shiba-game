@@ -442,6 +442,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 @media(min-width:1001px) and (min-height:600px){.app.town-illustrated .stage{max-width:calc((100dvh - 210px) * 1.6)}.app.town-illustrated .controls{max-height:calc(100dvh - 120px);overflow:auto}}
 @media(max-width:1000px){.app.town-illustrated .workspace{grid-template-columns:minmax(0,1fr)}.app.town-illustrated .controls{display:flex}}
 @media(max-width:520px){.town-badge{font-size:11px;padding:5px 8px}.town-hotspot,#townOverlay [data-store]{font-size:11px;padding:5px 6px}.town-storefronts{gap:2%}#townToolbar{font-size:12px;padding:8px}.home-lab{top:28%}}
+#craftQte{padding:14px;border:2px solid #c99b64;border-radius:14px;background:#fff5df}#craftStatus{line-height:1.6;min-height:48px}#craftAction{width:100%}#craftDots .miss{background:#ead6cc;color:#794b38}
 /* Shared town shell: one stage size, one palette and persistent navigation. */
 .app[data-scene]{max-width:1400px!important;width:100%;height:auto!important;min-height:calc(100dvh - 20px);gap:10px}
 .app[data-scene]>.tabs,.app[data-scene] #mapToggle{display:none!important}
@@ -550,6 +551,14 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     <details class="instructions"><summary>操作說明</summary><p class="hint">這是第一階段可操作的等角像素地圖。家具可避障尋路；學校、廟口、商店街與原有存檔繼續保留在其他分頁。原本研究室也保留。</p></details>
   </section>
   <section class="panel" id="p-lab" hidden>
+<section id="craftQte" hidden aria-label="發明 QTE 工作台">
+ <strong id="craftTitle"></strong><p id="craftStatus" role="status" aria-live="polite"></p>
+ <div id="craftDots" class="lab-steps"></div>
+ <div class="lab-meter" id="craftMeter" aria-hidden="true"><span style="left:38%;width:24%"></span><i id="craftNeedle"></i></div>
+ <p class="sub" id="craftHint"></p>
+ <button class="btn good" id="craftAction">開始第 1 次</button><button class="btn ghost" id="craftAssist">花 1 靈感 · 放寬本次判定</button>
+ <p class="sub">5 次機會：0 次普通 · 1–2 次精良 · 3–4 次優秀 · 5 次大師。失手也能完成；換地點或切換分頁會暫停。</p>
+</section>
 <section class="lab-game" aria-label="工作台小實驗">
  <div class="lab-game-head"><strong>二柴的發明工坊</strong></div>
  <p id="labTask" role="status">把零件組起來，再校準發明！沒有時間限制，答錯可以重試。</p>
@@ -564,7 +573,7 @@ summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     <div class="g2"><button class="btn ghost" id="bLamp">關掉立燈</button><button class="btn violet" id="bSleep">睡到明天早上</button></div>
     <div class="research-progress"><strong id="researchTitle">發明藍圖</strong><progress id="researchProgress" max="25" value="0" aria-label="目前研發進度"></progress><button class="btn blue" id="labBoost">投入靈感 · 加速 8 秒</button></div>
     <div class="inv" id="invList"></div>
-    <details class="instructions"><summary>操作說明</summary><p class="hint">在工作台依照提示挑選三個零件，再把指針停在綠色區域。每天前三次成功各獲得 1 點靈感；研發中可投入 1 點靈感加速 8 秒。發明完成後會幫助香腸攤。可切換「像素漫遊」繼續使用原有家具與配件。</p></details>
+    <details class="instructions"><summary>操作說明</summary><p class="hint">在工作台依照提示挑選三個零件，再把指針停在綠色區域。每天前三次成功各獲得 1 點靈感。選藍圖進行 5 次 QTE，成功越多品質越高；1 點靈感可放寬一次判定。失手也能完成，已完成工具可免費調校且不會降級。發明完成後自動套用到香腸攤。可切換「像素漫遊」繼續使用原有家具與配件。</p></details>
   </section>
 
   <section class="panel" id="p-school" hidden>
@@ -996,7 +1005,7 @@ LAB.draw=function(ph){
 };
 LAB.update=function(dt){
   const st=LAB.st;for(const k of['spark','crateGone','fridgeOpen','plantWater'])st[k]=Math.max(0,st[k]-dt);
-  if(S.build){const left=S.build.until-Date.now();const b=LAB.dogs[1];
+  if(S.build&&S.build.mode!=='qte'){const left=S.build.until-Date.now();const b=LAB.dogs[1];
     if(left<=0){S.inv[S.build.id]=true;const it=INV.find(v=>v.id===S.build.id);S.build=null;setIcon(b,'star',3);labSay('b','發明完成了：'+it.name+'。'+it.done);renderInv();save();}
     else if(b.state==='idle'&&!(Math.round(b.x)>=5&&Math.round(b.x)<=7&&Math.round(b.y)===1))goTo(b,[[6,1],[5,1],[7,1]],LAB.blocked,()=>{b.dir=-1;});}
   LAB.dogs.forEach((d,i)=>{stepDog(d,dt);if(i!==S.sel&&!(i===1&&S.build))wander(d,dt,LAB.blocked,LAB.dogs);});
@@ -1075,15 +1084,71 @@ const INV=[
   {id:'pepper',name:'胡椒煙霧砲',cost:400,desc:'打跑獵人時對方會嚇得掉 50 元',done:'下次獵人來就請他吃胡椒。'},
   {id:'turbo',name:'小獵犬號渦輪',cost:300,desc:'快閃之後更快開回來',done:'小獵犬號跑得跟風一樣快。'},
 ];
-function renderInv(){
-  const el=$('invList');const building=S.build&&INV.find(v=>v.id===S.build.id);
-  el.innerHTML='<p class="sub">二柴的發明'+(building?'（正在做：'+building.name+'）':'')+'</p>'+INV.map(v=>{
-    const done=S.inv[v.id],busy=S.build&&S.build.id===v.id;
-    return '<div class="inv-item"><p>'+v.name+'<small>'+v.desc+'</small></p><button class="btn'+(done?' ghost':'')+'" data-inv="'+v.id+'"'+(done||S.build||S.money<v.cost?' disabled':'')+'>'+(done?'完成':busy?'製作中':v.cost+' 元')+'</button></div>';}).join('');
-  el.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>{const v=INV.find(x=>x.id===b.dataset.inv);if(S.money<v.cost||S.build||S.inv[v.id])return;
-    S.money-=v.cost;S.build={id:v.id,until:Date.now()+25000};labSay('b','好，我來做'+v.name+'。大概要 25 秒，不要催我。');setIcon(LAB.dogs[1],'spark',3);
-    setTimeout(()=>{if(S.build)labSay('a','怎麼那麼慢！快～點～！');},4000);renderInv();save();});
+const QUALITY=['','普通','精良','優秀','大師'];
+S.toolQuality=S.toolQuality&&typeof S.toolQuality==='object'?S.toolQuality:{};
+function toolLevel(id){return S.inv[id]?Math.max(1,Math.min(4,Number(S.toolQuality[id])||1)):0;}
+function toolEffect(id,level=toolLevel(id)||1){
+ return {warm:'每次開店至少有 '+(level+2)+' 條熟香腸',flipper:'烤焦容忍值 '+(1.7+(level-1)*.2).toFixed(1)+'（原本 1.25）',sign:'客人到店間隔 '+(3-(level-1)*.4).toFixed(1)+'～'+(5.5-(level-1)*.4).toFixed(1)+' 秒',pepper:'打跑獵人可撿到 '+(50+(level-1)*15)+' 元',turbo:'快閃後 '+(3-(level-1)*.4).toFixed(1)+' 秒回攤'}[id];
 }
+function renderInv(){
+ const el=$('invList');
+ el.innerHTML='<p class="sub">選藍圖後進行 5 次 QTE。已完成的工具可免費調校，只保留更高品質。</p>'+INV.map(v=>{
+ const done=S.inv[v.id],busy=S.build&&S.build.id===v.id;
+ return '<div class="inv-item"><p>'+v.name+'<small>'+(done?QUALITY[toolLevel(v.id)]+' · ':'')+toolEffect(v.id)+'</small></p><button class="btn'+(done?' ghost':'')+'" data-inv="'+v.id+'"'+(S.build||(!done&&S.money<v.cost)?' disabled':'')+'>'+(busy?'製作中':done?'免費調校':v.cost+' 元')+'</button></div>';
+ }).join('');
+ el.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>startCraft(b.dataset.inv));
+}
+function startCraft(id){
+ const v=INV.find(x=>x.id===id);if(!v||S.build||(!S.inv[id]&&S.money<v.cost))return;
+ if(!S.inv[id])S.money-=v.cost;
+ S.build={id,mode:'qte',results:[],phase:'ready'};CRAFT.clock=0;CRAFT.position=0;
+ save();renderInv();renderCraft();syncResearch();$('craftQte').scrollIntoView({block:'nearest'});
+}
+const CRAFT={clock:0,position:0};
+function craftGrade(hits){return hits===5?4:hits>=3?3:hits>=1?2:1;}
+function renderCraft(){
+ const b=S.build;if(!b||b.mode!=='qte'){return;}
+ $('craftQte').hidden=false;
+ const hits=b.results.filter(Boolean).length;
+ $('craftTitle').textContent=INV.find(v=>v.id===b.id).name+' · QTE 製作';
+ $('craftDots').replaceChildren(...Array.from({length:5},(_,i)=>{const el=document.createElement('span');el.textContent=i<b.results.length?(b.results[i]?'✓':'×'):String(i+1);el.className=i<b.results.length?(b.results[i]?'done':'miss'):i===b.results.length?'active':'';return el;}));
+ $('craftStatus').textContent='成功 '+hits+' / 5 · 目前 '+QUALITY[craftGrade(hits)]+'品質'+(b.phase==='feedback'?'。'+(b.results.at(-1)?'這次成功！':'這次沒對準，下一次再試！'):'');
+ $('craftHint').textContent=b.phase==='active'?'指針進入綠色區域時，點「敲擊！」或聚焦按鈕按空白鍵。':'準備好再開始，每次有 4 秒。';
+ $('craftAction').textContent=b.phase==='active'?'敲擊！':b.phase==='feedback'?'下一次 QTE':'開始第 '+(b.results.length+1)+' 次';
+ $('craftMeter').hidden=b.phase!=='active';$('craftAssist').hidden=false;$('craftAssist').disabled=!!b.assisted||S.inspiration<1;$('craftAssist').textContent=b.assisted?'本次已啟用靈感輔助':'花 1 靈感 · 放寬本次判定';$('craftMeter').firstElementChild.style.left=b.assisted?'25%':'38%';$('craftMeter').firstElementChild.style.width=b.assisted?'50%':'24%';
+}
+function finishCraftRound(hit){
+ const b=S.build;if(!b||b.mode!=='qte'||b.phase!=='active')return;
+ b.results.push(hit);b.phase='feedback';b.assisted=false;
+ if(b.results.length===5){
+ const hits=b.results.filter(Boolean).length,grade=craftGrade(hits),old=toolLevel(b.id),level=Math.max(old,grade),item=INV.find(v=>v.id===b.id);
+ S.inv[b.id]=true;S.toolQuality[b.id]=level;S.build=null;
+ $('craftAssist').hidden=true;$('craftTitle').textContent=item.name+' · 完成';
+ $('craftStatus').textContent='成功 '+hits+' / 5，做出「'+QUALITY[grade]+'」品質！'+(old>grade?'保留原本更好的「'+QUALITY[old]+'」工具。':'')+'效果：'+toolEffect(item.id,level)+'。';
+ $('craftDots').replaceChildren(...b.results.map(hit=>{const el=document.createElement('span');el.textContent=hit?'✓':'×';el.className=hit?'done':'miss';return el;}));
+ $('craftMeter').hidden=true;$('craftHint').textContent='工具已自動裝上香腸攤。可從藍圖清單免費重新調校。';$('craftAction').textContent='收好工具';LAB.st.spark=3;
+ labSay('b',item.name+'完成！'+QUALITY[level]+'品質，'+toolEffect(item.id,level)+'。');renderInv();
+ }else renderCraft();
+ save();syncResearch();
+}
+$('craftAction').onclick=()=>{
+ const b=S.build;if(!b||b.mode!=='qte'){$('craftQte').hidden=true;return;}
+ if(b.phase==='active'){finishCraftRound(craftInZone());return;}
+ b.phase='active';CRAFT.clock=0;CRAFT.position=0;$('craftNeedle').style.left='0%';save();renderCraft();
+};
+function craftInZone(){const margin=S.build?.assisted?.25:.38;return CRAFT.position>=margin&&CRAFT.position<=1-margin;}
+$('craftAssist').onclick=()=>{const b=S.build;if(!b||b.mode!=='qte'||b.assisted||S.inspiration<1)return;S.inspiration--;b.assisted=true;save();renderCraft();syncResearch();};
+function updateCraft(dt){
+ const b=S.build;if(!b||b.mode!=='qte'||b.phase!=='active'||cur!=='lab'||document.hidden)return;
+ CRAFT.clock+=Math.min(dt,.1);
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ CRAFT.position=reduced?(CRAFT.clock>=1&&CRAFT.clock<=2.5?.5:0):(1-Math.cos(CRAFT.clock*Math.PI*1.1))/2;
+ $('craftNeedle').style.left=CRAFT.position*100+'%';
+ $('craftHint').textContent=(craftInZone()?'現在！敲擊！':'等待指針進入綠色區域')+' · 剩 '+Math.max(0,4-CRAFT.clock).toFixed(1)+' 秒';
+ if(CRAFT.clock>=4)finishCraftRound(false);
+}
+// Reload resumes between attempts, so no hidden timer or paid work is lost.
+if(S.build?.mode==='qte'){if(S.build.phase==='active')S.build.phase='ready';renderCraft();}
 
 // Illustrated workshop and optional hands-on research. Existing inventions remain compatible.
 let labClassic=false;
@@ -1129,21 +1194,22 @@ function calibrateExperiment(){
  if(!reduced&&(EXP.position<.3||EXP.position>.75)){renderExperiment('差一點！等指針進入綠色區域再按，不會扣零件。');return;}
  EXP.phase='done';labDay();
  const earned=S.labWins<3;if(earned){S.labWins++;S.inspiration++;}save();
- renderExperiment(earned?'實驗成功！獲得 1 點靈感，可投入正在製作的發明。':'實驗成功！今天的 3 次靈感已領完，明天再來領取。');
+ renderExperiment(earned?'實驗成功！獲得 1 點靈感，可放寬一次製作 QTE 的成功區域！':'實驗成功！今天的 3 次靈感已領完，明天再來領取。');
  LAB.st.spark=3;
 }
 function boostResearch(){
- if(!S.build||S.inspiration<1||S.build.until<=Date.now())return;
+ if(!S.build||S.build.mode==='qte'||S.inspiration<1||S.build.until<=Date.now())return;
  S.inspiration--;S.build.until=Math.max(Date.now(),S.build.until-8000);save();syncResearch();labSay('b','靈感派上用場了！研發加速 8 秒。');
 }
 function syncResearch(){
- labDay();const building=S.build&&INV.find(v=>v.id===S.build.id),left=building?Math.max(0,(S.build.until-Date.now())/1000):0;
- $('researchTitle').textContent=building?building.name+' · 還有 '+Math.ceil(left)+' 秒':'選一張藍圖，升級你的香腸攤';
- $('labArtStatus').textContent=building?'研發中 · '+Math.ceil(left)+' 秒':'二柴的發明工坊';
+ labDay();const building=S.build&&S.build.mode!=='qte'&&INV.find(v=>v.id===S.build.id),left=building?Math.max(0,(S.build.until-Date.now())/1000):0;
+ $('researchTitle').textContent=building?building.name+' · 還有 '+Math.ceil(left)+' 秒':S.build?.mode==='qte'?'QTE 製作中 · 成功越多，工具越好':'選藍圖開始 QTE，或免費調校舊工具';
+ $('labArtStatus').textContent=S.build?.mode==='qte'?'QTE 製作 · '+S.build.results.filter(Boolean).length+' 次成功':building?'研發中 · '+Math.ceil(left)+' 秒':'二柴的發明工坊';
  $('labLamp').textContent=S.lamp?'☀ 工作燈':'☀ 開燈';
  $('researchProgress').hidden=!building;$('researchProgress').value=25-Math.min(25,left);
- $('labBoost').disabled=!building||S.inspiration<1||left<=0;
+ $('labBoost').hidden=!building;$('labBoost').disabled=!building||S.inspiration<1||left<=0;
  $('labBoost').textContent='投入靈感 · 加速 8 秒（現有 '+S.inspiration+'）';
+ if(S.build?.mode==='qte')$('craftAssist').disabled=!!S.build.assisted||S.inspiration<1;
  $('labReward').textContent='靈感 '+S.inspiration+' 點 · 今日獎勵 '+Math.min(3,S.labWins)+' / 3 · 之後可繼續練習';
 }
 function updateExperiment(dt){
@@ -1333,7 +1399,7 @@ function truckDraw(c){
 function counterDraw(c){const x=TRUCK.x+TP.truckDX,y=TRUCK.y,d=TRUCK.d;poly(c,[P(x+.05,y+d+.18,12),P(x+1.4,y+d+.18,12),P(x+1.4,y+d,10),P(x+.05,y+d,10)],'#bd806b');
   for(let i=0;i<4;i++){const q=P(x+.25+i*.32,y+d,22);rect(c,q[0]-3,q[1]-1,6,3,i%2?'#f6ead2':'#bd806b');}
   if(TP.stock>0){const q=P(x+.4,y+d+.15,12);for(let i=0;i<Math.min(4,TP.stock);i++)rect(c,q[0]+i*4,q[1]-2,3,2,'#a8452c');}}
-const burnAt=()=>S.inv.flipper?1.7:1.25;
+const burnAt=()=>S.inv.flipper?1.7+(toolLevel('flipper')-1)*.2:1.25;
 function sCol(v){if(v<.5)return '#e7899a';if(v<.85)return '#c8664a';if(v<burnAt())return '#a8452c';return '#3a2a24';}
 // Inside the truck looking out: art and hit targets use the same 320 x 236 space.
 const COUNTER={grillX:49,grillY:164,slotW:53,grillH:57};
@@ -1586,7 +1652,7 @@ TP.update=function(dt){
   if(TP.fled>0){TP.fled-=dt;const out=S.inv.turbo?1.2:2.5;TP.truckDX=TP.fled>out?Math.min(8,TP.truckDX+10*dt):Math.max(0,TP.truckDX-6*dt);if(TP.fled<=0)TP.truckDX=0;}
   if(TP.open){
     TP.slots.forEach((s,i)=>{if(s.on){const was=s.c;s.c+=dt/7;if(was<.85&&s.c>=.85)stallEffect('ready',i);}});
-    if(TP.fled<=0){TP.spawn-=dt;const act=TP.q.filter(p=>p.state==='in'||p.state==='queue'||p.state==='serving').length;if(TP.spawn<=0&&act<5){TP.q.push(newCustomer());TP.spawn=(S.inv.sign?3:4.5)+Math.random()*2.5;}}
+    if(TP.fled<=0){TP.spawn-=dt;const act=TP.q.filter(p=>p.state==='in'||p.state==='queue'||p.state==='serving').length;if(TP.spawn<=0&&act<5){TP.q.push(newCustomer());TP.spawn=(S.inv.sign?3-(toolLevel('sign')-1)*.4:4.5)+Math.random()*2.5;}}
     TP.bowlT-=dt;if(TP.bowlT<=0){TP.bowlT=6+Math.random()*6;S.bowl+=pick([1,5,10,10,50])*(S.own.cat?2:1);}
     TP.trick-=dt;if(TP.trick<=0){TP.trick=40+Math.random()*30;if(S.own.cards){const tip=10+Math.floor(Math.random()*21);S.money+=tip;setIcon(TP.dogs[0],'star',2.5);tpSay('小柴','（表演撲克牌魔術）塔搭！路人給了 '+tip+' 元小費。');}else if(TP.stock>0){TP.stock--;setIcon(TP.dogs[0],'star',2.5);tpSay('小柴','塔搭！（把一條香腸變不見了）');setTimeout(()=>{aSay('怎麼那麼慢！快～點～變回來！','anger');setTimeout(()=>{TP.stock++;tpSay('小柴','塔搭！香腸變回來了。');},1800);},1400);}}
   }
@@ -1619,14 +1685,14 @@ function sell(){if(TP.fled>0){tpSay('','快閃中，回到攤位後才能出餐�
   TP.stock--;const tip=Math.random()<.3?5:0;S.money+=35+tip;S.sold++;S.soldToday++;f.garlic=S.garlic;f.state='serving';f.serveT=.75;f.icon='heart';stallEffect('sale',0,35+tip);syncTemple();
   if(f.kind==='hunter')aSay('賣出去了……那個客人一直盯著我看，好可疑。','q');else aSay(pick(['一條 35 元，謝謝光臨！','那沒什麼，我烤的香腸最好吃。','下次再來！'])+(f.garlic?'（附上蒜頭）':'（不加蒜頭）')+(tip?'（客人多給了 5 元小費）':''),'coin');save();}
 function hit(){const f=front();if(!TP.open||TP.fled>0)return;if(!f){aSay('香腸發射器空射一發。那沒什麼，試射啦。');return;}
-  if(f.kind==='hunter'){f.state='fly';f.fly=0;f.net=0;const bonus=S.inv.pepper?50:20;S.money+=bonus;S.hunters++;aSay((S.inv.pepper?'胡椒煙霧砲！獵人噴嚏打不停，':'香腸發射器命中！')+'柴犬獵人飛走了，掉了 '+bonus+' 元。那沒什麼。','star');}
+  if(f.kind==='hunter'){f.state='fly';f.fly=0;f.net=0;const bonus=S.inv.pepper?50+(toolLevel('pepper')-1)*15:20;S.money+=bonus;S.hunters++;aSay((S.inv.pepper?'胡椒煙霧砲！獵人噴嚏打不停，':'香腸發射器命中！')+'柴犬獵人飛走了，掉了 '+bonus+' 元。那沒什麼。','star');}
   else if(f.kind==='police'){S.money=Math.max(0,S.money-150);f.state='leave';f.icon='anger';aSay('打到警察了，罰 150 元……阿柴瞇著眼裝沒事。','q');}
   else{S.money=Math.max(0,S.money-20);f.state='leave';f.icon='anger';aSay('打錯人了，賠客人 20 元。客人：哩洗咧……','q');}
   save();}
-function flee(){if(!TP.open||TP.fled>0)return;TP.fled=S.inv.turbo?3:5;const cop=TP.q.some(p=>p.kind==='police'&&p.state!=='leave');TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});
+function flee(){if(!TP.open||TP.fled>0)return;TP.fled=S.inv.turbo?3-(toolLevel('turbo')-1)*.4:5;const cop=TP.q.some(p=>p.kind==='police'&&p.state!=='leave');TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});
   aSay(cop?'小獵犬號一溜煙開走，躲過警察！快～點～開！':'快閃了，可是客人也都散了。怎麼沒有警察？','excl');}
 function kara(){if(T-TP.karaAt<40)return;TP.karaAt=T;TP.reveal=8;setIcon(TP.dogs[0],'spark',3);tpSay('','卡拉發動！二柴和小柴的感應傳過來，柴犬獵人身邊浮出紅框。');}
-function toggleOpen(){TP.open=!TP.open;if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,3);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
+function toggleOpen(){TP.open=!TP.open;if(TP.open){if(S.inv.warm)TP.stock=Math.max(TP.stock,toolLevel('warm')+2);TP.spawn=1.5;aSay(phase()==='night'?'夜市開始了，香腸攤開張！':'小獵犬號開張！快～點～來買香腸！','note');}
   else{TP.q.forEach(p=>{if(p.state!=='fly')p.state='leave';});aSay('收攤了。今天賣了 '+S.soldToday+' 條，那沒什麼。');}syncTemple();save();}
 function collectBowl(){if(S.bowl<=0){tpSay('','碗裡空空的。開店的時候，來拜拜的人會順手丟零錢。');return;}const v=S.bowl;S.money+=v;S.bowl=0;aSay('碗裡有 '+v+' 元，收起來！','coin');save();}
 function bbq(){if(S.money<200){aSay('還差 '+(200-S.money)+' 元……快～點～賺錢！','anger');return;}S.money-=200;S.bbq++;const n=8+Math.floor(Math.random()*10);
@@ -2232,7 +2298,7 @@ $('bLamp').textContent=S.lamp?'關掉立燈':'打開立燈';
 // ================= loop =================
 let last=performance.now()/1000,uiT=0,saveT=0;
 function frame(){const t=performance.now()/1000,dt=Math.min(.05,t-last);last=t;T=t;
-  updateTown(dt);updateExperiment(dt);tick(dt);HOME.update(dt);LAB.update(dt);SCH.update(dt);TP.update(dt);SPS.update(dt);updateJourney(dt);
+  updateTown(dt);updateExperiment(dt);updateCraft(dt);tick(dt);HOME.update(dt);LAB.update(dt);SCH.update(dt);TP.update(dt);SPS.update(dt);updateJourney(dt);
   const ph=phase();g.globalCompositeOperation='source-over';g.globalAlpha=1;g.fillStyle='#241b17';g.fillRect(0,0,W,H);SC[cur].draw(ph);present();
   uiT+=dt;if(uiT>.2){uiT=0;$('hClock').textContent=clockText();$('hMoney').textContent=S.money;syncDailyGoals();
     if(cur==='temple')syncTemple();if(cur==='shop')SPS.sync();if(cur==='school')syncSchoolBtns();syncTownStatus();if(cur==='lab'){syncResearch();$('bSleep').disabled=ph!=='night';if(S.build||Math.random()<.05)renderInvLite();}}
